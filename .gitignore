@@ -3,6 +3,7 @@ bin
 bin-ant
 lib
 report
+/photogator/
 photogator.log
 prerequisites
 SavedPhotogatorSessions
