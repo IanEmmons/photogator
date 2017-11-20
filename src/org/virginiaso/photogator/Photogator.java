@@ -69,6 +69,7 @@ public class Photogator extends JFrame {
 	private JComboBox<String> divisionCombo;
 	private JLabel teamNumLbl;
 	private JSpinner teamNumSpinner;
+	private JButton readyBtn;
 	private JButton saveBtn;
 	private JButton clearBtn;
 	private JButton aboutBtn;
@@ -135,6 +136,14 @@ public class Photogator extends JFrame {
 		toolBar.add(teamNumSpinner);
 
 		toolBar.addSeparator();
+
+		readyBtn = createToolbarBtn(null, "Ready", "Ready for the next run", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				readyBtnAction(evt);
+			}
+		});
+		toolBar.add(readyBtn);
 
 		saveBtn = createToolbarBtn("save-as24", "Save", "Save the log contents to a file", new ActionListener() {
 			@Override
@@ -299,6 +308,9 @@ public class Photogator extends JFrame {
 			str = str.trim();
 			return (str.isEmpty()) ? null : str;
 		}
+	}
+
+	private void readyBtnAction(ActionEvent evt) {
 	}
 
 	private void saveBtnAction(ActionEvent evt) {

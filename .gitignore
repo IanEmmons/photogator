@@ -1,9 +1,9 @@
 .DS_Store
-bin
-bin-ant
-lib
-report
+/bin/
+/bin-ant/
+/lib/
+/report/
 /photogator/
-photogator.log
-prerequisites
-SavedPhotogatorSessions
+/photogator.log
+/prerequisites/
+/SavedPhotogatorSessions/
