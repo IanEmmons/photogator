@@ -151,9 +151,9 @@ public class InitializationDialog extends JDialog {
 
 			//Connect to portName:
 			try {
-				portRdr = new SerialPortReader(portName, this::serialPortRecieveAction, ApplicationFrame.ERR_LOG);
+				portRdr = new SerialPortReader(portName, this::serialPortRecieveAction, Photogator.ERR_LOG);
 			} catch (SerialPortException ex) {
-				ex.printStackTrace(ApplicationFrame.ERR_LOG);
+				ex.printStackTrace(Photogator.ERR_LOG);
 			}
 		}
 	}
@@ -161,7 +161,7 @@ public class InitializationDialog extends JDialog {
 	private void serialPortRecieveAction(String msg) {
 		ArduinoEvent evt = ArduinoEvent.parse(msg);
 		if (evt == null) {
-			ApplicationFrame.ERR_LOG.format("Unrecognized message '%1$s'%n", msg);
+			Photogator.ERR_LOG.format("Unrecognized message '%1$s'%n", msg);
 		} else if (evt instanceof HeartBeatEvent || evt instanceof BeamBrokenEvent) {
 			setArduinoDetected(true);
 		}
@@ -172,7 +172,7 @@ public class InitializationDialog extends JDialog {
 			try {
 				portRdr.close();
 			} catch (SerialPortException ex) {
-				ex.printStackTrace(ApplicationFrame.ERR_LOG);
+				ex.printStackTrace(Photogator.ERR_LOG);
 			}
 			portRdr = null;
 		}

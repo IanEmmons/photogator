@@ -48,7 +48,7 @@
 		<mkdir dir="${deployableDir}"/>
 		<jar destfile="${jarFile}" basedir="${binDir}">
 			<manifest>
-				<attribute name="Main-Class" value="org.virginiaso.photogator.ApplicationFrame"/>
+				<attribute name="Main-Class" value="org.virginiaso.photogator.Photogator"/>
 			</manifest>
 		</jar>
 		<copy todir="${deployableDir}">

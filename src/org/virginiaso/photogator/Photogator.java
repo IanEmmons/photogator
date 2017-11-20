@@ -45,7 +45,7 @@ import org.virginiaso.serialport.SerialPortReader;
 
 import jssc.SerialPortException;
 
-public class ApplicationFrame extends JFrame {
+public class Photogator extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static final String APP_NAME = "Photogator";
 	private static final String SERIAL_PORT_PROP = "serial.port";
@@ -93,12 +93,13 @@ public class ApplicationFrame extends JFrame {
 		ArduinoEvent.registerMsgType(BeamBrokenEvent.class);
 	}
 
-	public ApplicationFrame() {
+	public Photogator() {
 		initComponents();
 		setLogDirty(false);
 	}
 
 	private void initComponents() {
+		setName(APP_NAME);
 		setTitle(APP_NAME);
 		ImageIcon appIcon = createIcon("app-icon24", APP_NAME);
 		setIconImage(appIcon.getImage());
@@ -351,13 +352,12 @@ public class ApplicationFrame extends JFrame {
 			SAVED_SESSION_DIR.mkdirs();
 			sessionDirExists = true;
 		} else if (!SAVED_SESSION_DIR.isDirectory()) {
-			String title = ApplicationFrame.class.getSimpleName();
 			String msg = String.format(""
 				+ "Unable to create the directory for saved sessions,%n"
 				+ "     %1$s%n"
 				+ "because it already exists, but is not a directory",
 				SAVED_SESSION_DIR.getAbsolutePath());
-			JOptionPane.showMessageDialog(null, msg, title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
 		} else {
 			sessionDirExists = true;
 		}
@@ -469,7 +469,7 @@ public class ApplicationFrame extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new ApplicationFrame().setVisible(true);
+				new Photogator().setVisible(true);
 			}
 		});
 	}
