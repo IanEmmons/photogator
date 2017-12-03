@@ -391,7 +391,7 @@ public class Photogator extends JFrame {
 	private void clearBtnAction(ActionEvent evt) {
 		int option = JOptionPane.NO_OPTION;
 		if (isLogDirty()) {
-			option = JOptionPane.showConfirmDialog(this,							// Parent window
+			option = JOptionPane.showConfirmDialog(this,						// Parent window
 				"Would you like to save the display before clearing it?",	// Message
 				APP_NAME,																	// Title
 				JOptionPane.YES_NO_CANCEL_OPTION,									// Button choices
