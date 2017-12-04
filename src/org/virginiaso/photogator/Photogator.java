@@ -3,6 +3,7 @@ package org.virginiaso.photogator;
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -25,6 +26,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -137,7 +139,7 @@ public class Photogator extends JFrame {
 
 		toolBar.addSeparator();
 
-		readyBtn = createToolbarBtn(null, "Ready", "Ready for the next run", new ActionListener() {
+		readyBtn = createToolbarBtn("save-and-clear", "Ready", "Ready for the next run", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				readyBtnAction(evt);
@@ -213,7 +215,14 @@ public class Photogator extends JFrame {
 			ERR_LOG.format("Unable to find resource '%1$s'%n", path);
 			return null;
 		} else {
-			return new ImageIcon(imageURL, description);
+			try {
+				Image img = ImageIO.read(imageURL);
+				img = img.getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+				return new ImageIcon(img, description);
+			} catch (IOException ex) {
+				ex.printStackTrace();
+				return null;
+			}
 		}
 	}
 
