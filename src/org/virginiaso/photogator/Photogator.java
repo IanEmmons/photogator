@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,6 +22,9 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -358,8 +362,8 @@ public class Photogator extends JFrame {
 			File newSessionFile = new File(SAVED_SESSION_DIR,
 				String.format(SAVED_SESSION_FILENM_FMT, division, teamNum, sessionNum));
 			try (
-				OutputStream out = new FileOutputStream(newSessionFile);
-				Writer wtr = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+				BufferedWriter wtr = Files.newBufferedWriter(newSessionFile.toPath(),
+					StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)
 			) {
 				wtr.write(log.getText());
 			}
