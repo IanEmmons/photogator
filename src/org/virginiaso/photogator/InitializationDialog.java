@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,8 +48,8 @@ public class InitializationDialog extends JDialog {
 
 	private JLabel headingLbl;
 	private JPanel serialPortBtnPnl;
-	private List<JRadioButton> serialPortBtns;
 	private ButtonGroup serialPortBtnGrp;
+	private List<JRadioButton> serialPortBtns;
 	private JProgressBar progBar;
 	private JButton exitBtn;
 	private JPanel progAndExitPnl;
@@ -78,26 +77,24 @@ public class InitializationDialog extends JDialog {
 
 		headingLbl = new JLabel(HEADING_TEXT);
 
+		serialPortBtnGrp = new ButtonGroup();
 		serialPortBtnPnl = new JPanel();
 		serialPortBtnPnl.setLayout(new BoxLayout(serialPortBtnPnl, BoxLayout.PAGE_AXIS));
 
-		List<String> serialPorts = Arrays.stream(getSerialPortNames())
+		Font btnFont = new Font(Font.MONOSPACED, Font.PLAIN, headingLbl.getFont().getSize());
+		serialPortBtns = Arrays.stream(getSerialPortNames())
 			.sorted()
 			.distinct()
+			.map(portName -> {
+				JRadioButton btn = new JRadioButton(portName);
+				btn.setActionCommand(portName);
+				btn.setEnabled(false);
+				btn.setFont(btnFont);
+				serialPortBtnGrp.add(btn);
+				serialPortBtnPnl.add(btn);
+				return btn;
+			})
 			.collect(Collectors.toList());
-
-		serialPortBtns = new ArrayList<>();
-		serialPortBtnGrp = new ButtonGroup();
-		Font btnFont = new Font(Font.MONOSPACED, Font.PLAIN, headingLbl.getFont().getSize());
-		for (String portName : serialPorts) {
-			JRadioButton btn = new JRadioButton(portName);
-			btn.setActionCommand(portName);
-			btn.setEnabled(false);
-			btn.setFont(btnFont);
-			serialPortBtns.add(btn);
-			serialPortBtnGrp.add(btn);
-			serialPortBtnPnl.add(btn);
-		}
 		serialPortBtnPnl.add(new JLabel(" "));	// spacer
 
 		progBar = new JProgressBar(SwingConstants.HORIZONTAL);
@@ -132,7 +129,9 @@ public class InitializationDialog extends JDialog {
 	}
 
 	private void onTimerEvent() {
-		if (isArduinoDetected()) {
+		if (!isASerialPortPresent()) {
+			// Do nothing
+		} else if (isArduinoDetected()) {
 			timer.stop();
 			foundSerialPort = portRdr.getSerialPortName();
 			disconnectFromSerialPort();
@@ -149,7 +148,7 @@ public class InitializationDialog extends JDialog {
 			currentBtn.setSelected(true);
 			String portName = currentBtn.getActionCommand();
 
-			//Connect to portName:
+			// Connect to portName:
 			try {
 				portRdr = new SerialPortReader(portName, this::serialPortRecieveAction, Photogator.ERR_LOG);
 			} catch (SerialPortException ex) {

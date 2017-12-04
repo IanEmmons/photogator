@@ -139,7 +139,7 @@ public class Photogator extends JFrame {
 
 		toolBar.addSeparator();
 
-		readyBtn = createToolbarBtn("save-and-clear", "Ready", "Ready for the next run", new ActionListener() {
+		readyBtn = createToolbarBtn("saveAndClear", "Ready", "Ready for the next run", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				readyBtnAction(evt);
@@ -147,7 +147,7 @@ public class Photogator extends JFrame {
 		});
 		toolBar.add(readyBtn);
 
-		saveBtn = createToolbarBtn("save-as24", "Save", "Save the log contents to a file", new ActionListener() {
+		saveBtn = createToolbarBtn("save-as24", "Save and Clear", "Save the log contents to a file and clear the log (cannot be undone)", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				saveBtnAction(evt);
@@ -165,7 +165,7 @@ public class Photogator extends JFrame {
 
 		toolBar.addSeparator();
 
-		aboutBtn = createToolbarBtn("about24", "About", "About " + APP_NAME, new ActionListener() {
+		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				aboutBtnAction(evt);
@@ -330,9 +330,9 @@ public class Photogator extends JFrame {
 		} else {
 			int option = JOptionPane.showConfirmDialog(this,				// Parent window
 				"Would you like to clear the display after saving it?",	// Message
-				APP_NAME,																// Title
-				JOptionPane.YES_NO_CANCEL_OPTION,								// Button choices
-				JOptionPane.QUESTION_MESSAGE);									// Icon
+				APP_NAME,												// Title
+				JOptionPane.YES_NO_CANCEL_OPTION,						// Button choices
+				JOptionPane.QUESTION_MESSAGE);							// Icon
 
 			if (option == JOptionPane.YES_OPTION || option == JOptionPane.NO_OPTION) {
 				try {
