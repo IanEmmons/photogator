@@ -11,19 +11,14 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.io.Writer;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Properties;
@@ -76,8 +71,8 @@ public class Photogator extends JFrame {
 	private JLabel teamNumLbl;
 	private JSpinner teamNumSpinner;
 	private JButton readyBtn;
-	private JButton saveBtn;
-	private JButton clearBtn;
+	private JButton saveAndClearBtn;
+	private JButton settingsBtn;
 	private JButton aboutBtn;
 	private JTextArea log;
 	private JScrollPane logScrollPane;
@@ -143,7 +138,7 @@ public class Photogator extends JFrame {
 
 		toolBar.addSeparator();
 
-		readyBtn = createToolbarBtn("saveAndClear", "Ready", "Ready for the next run", new ActionListener() {
+		readyBtn = createToolbarBtn(null, "Ready", "Ready for the next run", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				readyBtnAction(evt);
@@ -151,23 +146,24 @@ public class Photogator extends JFrame {
 		});
 		toolBar.add(readyBtn);
 
-		saveBtn = createToolbarBtn("save-as24", "Save and Clear", "Save the log contents to a file and clear the log (cannot be undone)", new ActionListener() {
+		saveAndClearBtn = createToolbarBtn("saveAndClear", "Save and Clear",
+			"Save the log contents to a file and clear the log (cannot be undone)", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				saveBtnAction(evt);
 			}
 		});
-		toolBar.add(saveBtn);
-
-		clearBtn = createToolbarBtn("delete24", "Clear", "Clear the log contents (cannot be undone)", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				clearBtnAction(evt);
-			}
-		});
-		toolBar.add(clearBtn);
+		toolBar.add(saveAndClearBtn);
 
 		toolBar.addSeparator();
+
+		settingsBtn = createToolbarBtn("settings", "Settings", APP_NAME + " settings", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				settingsBtnAction(evt);
+			}
+		});
+		toolBar.add(settingsBtn);
 
 		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME, new ActionListener() {
 			@Override
@@ -175,7 +171,6 @@ public class Photogator extends JFrame {
 				aboutBtnAction(evt);
 			}
 		});
-		//aboutBtn.setIcon(appIcon);
 		toolBar.add(aboutBtn);
 
 		log = new JTextArea(200, 50);
@@ -236,7 +231,7 @@ public class Photogator extends JFrame {
 
 	private void setLogDirty(boolean newValue) {
 		isLogDirty = newValue;
-		saveBtn.setEnabled(isLogDirty);
+		saveAndClearBtn.setEnabled(isLogDirty);
 	}
 
 	private void windowOpenAction() {
@@ -327,23 +322,22 @@ public class Photogator extends JFrame {
 	}
 
 	private void saveBtnAction(ActionEvent evt) {
-		if (log.getText().trim().isEmpty()) {
-			msgDlg(JOptionPane.INFORMATION_MESSAGE, "There is no text to save.");
-		} else if (!isLogDirty()) {
-			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Already saved.");
+		if (log.getText().trim().isEmpty() || !isLogDirty()) {
+			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Nothing to save.");
 		} else {
-			int option = JOptionPane.showConfirmDialog(this,				// Parent window
-				"Would you like to clear the display after saving it?",	// Message
-				APP_NAME,												// Title
-				JOptionPane.YES_NO_CANCEL_OPTION,						// Button choices
-				JOptionPane.QUESTION_MESSAGE);							// Icon
+			String msg = String.format("Saving the display for team %1$s-%1$d and then clearing it",
+				divisionCombo.getSelectedItem(),
+				(int) teamNumSpinner.getValue());
+			int option = JOptionPane.showConfirmDialog(this,	// Parent window
+				msg,														// Message
+				APP_NAME,													// Title
+				JOptionPane.OK_CANCEL_OPTION,						// Button choices
+				JOptionPane.QUESTION_MESSAGE);						// Icon
 
-			if (option == JOptionPane.YES_OPTION || option == JOptionPane.NO_OPTION) {
+			if (option == JOptionPane.OK_OPTION) {
 				try {
 					saveDisplay();
-					if (option == JOptionPane.YES_OPTION) {
-						clearDisplay();
-					}
+					clearDisplay();
 				} catch (IOException ex) {
 					ex.printStackTrace(ERR_LOG);
 					msgDlg(JOptionPane.ERROR_MESSAGE,
@@ -401,34 +395,14 @@ public class Photogator extends JFrame {
 			.orElse(-1);
 	}
 
-	private void clearBtnAction(ActionEvent evt) {
-		int option = JOptionPane.NO_OPTION;
-		if (isLogDirty()) {
-			option = JOptionPane.showConfirmDialog(this,						// Parent window
-				"Would you like to save the display before clearing it?",	// Message
-				APP_NAME,																	// Title
-				JOptionPane.YES_NO_CANCEL_OPTION,									// Button choices
-				JOptionPane.QUESTION_MESSAGE);										// Icon
-		}
-		if (option == JOptionPane.YES_OPTION || option == JOptionPane.NO_OPTION) {
-			try {
-				if (option == JOptionPane.YES_OPTION) {
-					saveDisplay();
-				}
-				clearDisplay();
-			} catch (IOException ex) {
-				ex.printStackTrace(ERR_LOG);
-				msgDlg(JOptionPane.ERROR_MESSAGE,
-					"Unable to save display.  Detailed error message:%n%1$s%n%2$s",
-					ex.getClass().getName(), ex.getMessage());
-			}
-		}
-	}
-
 	private void clearDisplay() {
 		log.setText("");
 		log.setCaretPosition(0);
 		setLogDirty(false);
+	}
+
+	private void settingsBtnAction(ActionEvent evt) {
+		msgDlg(JOptionPane.INFORMATION_MESSAGE, "Settings are not yet implemented.");
 	}
 
 	private void aboutBtnAction(ActionEvent evt) {
