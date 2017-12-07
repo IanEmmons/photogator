@@ -1,13 +1,16 @@
 package org.virginiaso.photogator;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -199,6 +202,12 @@ public class Photogator extends JFrame {
 		btn.addActionListener(listener);
 		ImageIcon img = createIcon(imageName, altText);
 		if (img == null) {
+			BufferedImage strut = new BufferedImage(1, 24, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2 = strut.createGraphics();
+			g2.setColor(new Color(0, 0, 0, 0));
+			g2.fillRect(0, 0, 1, 24);
+			g2.dispose();
+			btn.setIcon(new ImageIcon(strut));
 			btn.setText(altText);
 		} else {
 			btn.setIcon(img);
