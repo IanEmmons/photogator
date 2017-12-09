@@ -4,19 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
@@ -47,12 +45,12 @@ public class InitializationDialog extends JDialog {
 	private static final long TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS = 5000;
 
 	private JLabel headingLbl;
-	private JPanel serialPortBtnPnl;
 	private ButtonGroup serialPortBtnGrp;
+	private Box serialPortBtnBox;
 	private List<JRadioButton> serialPortBtns;
 	private JProgressBar progBar;
 	private JButton exitBtn;
-	private JPanel progAndExitPnl;
+	private Box progAndExitBox;
 	private Timer timer;
 	private int currentRadioBtnIndex = -1;
 	private long currentRadioBtnStartTime = System.currentTimeMillis() - 2 * TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS;
@@ -67,19 +65,14 @@ public class InitializationDialog extends JDialog {
 
 	private void initComponents() {
 		setTitle(DIALOG_TITLE);
-
-		setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent we) {
-			}
-		});
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		headingLbl = new JLabel(HEADING_TEXT);
 
 		serialPortBtnGrp = new ButtonGroup();
-		serialPortBtnPnl = new JPanel();
-		serialPortBtnPnl.setLayout(new BoxLayout(serialPortBtnPnl, BoxLayout.PAGE_AXIS));
+		serialPortBtnBox = Box.createVerticalBox();
+		serialPortBtnBox.add(headingLbl);
+		serialPortBtnBox.add(Box.createVerticalStrut(3));
 
 		Font btnFont = new Font(Font.MONOSPACED, Font.PLAIN, headingLbl.getFont().getSize());
 		serialPortBtns = Arrays.stream(getSerialPortNames())
@@ -91,11 +84,11 @@ public class InitializationDialog extends JDialog {
 				btn.setEnabled(false);
 				btn.setFont(btnFont);
 				serialPortBtnGrp.add(btn);
-				serialPortBtnPnl.add(btn);
+				serialPortBtnBox.add(btn);
 				return btn;
 			})
 			.collect(Collectors.toList());
-		serialPortBtnPnl.add(new JLabel(" "));	// spacer
+		serialPortBtnBox.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
 
 		progBar = new JProgressBar(SwingConstants.HORIZONTAL);
 		progBar.setIndeterminate(true);
@@ -108,15 +101,15 @@ public class InitializationDialog extends JDialog {
 			}
 		});
 
-		progAndExitPnl = new JPanel();
-		progAndExitPnl.setLayout(new BoxLayout(progAndExitPnl, BoxLayout.LINE_AXIS));
-		progAndExitPnl.add(progBar);
-		progAndExitPnl.add(exitBtn);
+		progAndExitBox = Box.createHorizontalBox();
+		progAndExitBox.add(progBar);
+		progAndExitBox.add(exitBtn);
+		progAndExitBox.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
 
-		add(headingLbl, BorderLayout.PAGE_START);
-		add(serialPortBtnPnl, BorderLayout.CENTER);
-		add(progAndExitPnl, BorderLayout.PAGE_END);
+		getContentPane().add(serialPortBtnBox, BorderLayout.CENTER);
+		getContentPane().add(progAndExitBox, BorderLayout.PAGE_END);
 		pack();
+		setLocationRelativeTo(getOwner());
 
 		timer = new Timer(TIMER_INTERVAL_MS, new ActionListener() {
 			@Override

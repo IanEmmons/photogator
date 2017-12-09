@@ -68,6 +68,8 @@ public class Photogator extends JFrame {
 
 	static final PrintStream ERR_LOG;
 
+	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
+
 	private JToolBar toolBar;
 	private JLabel divisionLbl;
 	private JComboBox<String> divisionCombo;
@@ -255,7 +257,6 @@ public class Photogator extends JFrame {
 					msgDlg(JOptionPane.ERROR_MESSAGE,
 						"No serial ports are present.%nPerhaps the photogates are not connected to the computer.");
 				}
-				initDlg.dispose();
 			}
 
 			if (serialPortName == null) {
@@ -334,14 +335,14 @@ public class Photogator extends JFrame {
 		if (log.getText().trim().isEmpty() || !isLogDirty()) {
 			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Nothing to save.");
 		} else {
-			String msg = String.format("Saving the display for team %1$s-%1$d and then clearing it",
+			String msg = String.format("Saving the display for team %1$s-%2$d and then clearing it",
 				divisionCombo.getSelectedItem(),
-				(int) teamNumSpinner.getValue());
+				(Integer) teamNumSpinner.getValue());
 			int option = JOptionPane.showConfirmDialog(this,	// Parent window
-				msg,														// Message
-				APP_NAME,													// Title
-				JOptionPane.OK_CANCEL_OPTION,						// Button choices
-				JOptionPane.QUESTION_MESSAGE);						// Icon
+				msg,											// Message
+				APP_NAME,									// Title
+				JOptionPane.OK_CANCEL_OPTION,				// Button choices
+				JOptionPane.QUESTION_MESSAGE);				// Icon
 
 			if (option == JOptionPane.OK_OPTION) {
 				try {
@@ -411,7 +412,8 @@ public class Photogator extends JFrame {
 	}
 
 	private void settingsBtnAction(ActionEvent evt) {
-		msgDlg(JOptionPane.INFORMATION_MESSAGE, "Settings are not yet implemented.");
+		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
+		computeMethod = dlg.getElapsedTimeComputeMethod();
 	}
 
 	private void aboutBtnAction(ActionEvent evt) {

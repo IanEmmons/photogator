@@ -3,97 +3,109 @@ package org.virginiaso.photogator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.KeyEvent;
 
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends JDialog implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Settings";
 
+	private ElapsedTimeComputeMethod etComputeMethod;
 	private JLabel headingLbl;
-	private JPanel radioBtnPnl;
-	private ButtonGroup radioBtnGrp;
 	private JRadioButton consecutivePairsRadioBtn;
 	private JRadioButton firstStartAfterReadyRadioBtn;
-	private JButton okBtn;
+	private ButtonGroup radioBtnGrp;
+	private Box radioBtnBox;
 	private JButton cancelBtn;
-	private JPanel okCancelPnl;
+	private JButton okBtn;
+	private Box okCancelBox;
 
-	public SettingsDialog(JFrame owner) {
-		super(owner, true);
+	public SettingsDialog(JFrame owner, ElapsedTimeComputeMethod elapsedTimeComputeMethod) {
+		super(owner, true);	// make's this a modal dialog
+		etComputeMethod = elapsedTimeComputeMethod;
 		initComponents();
 	}
 
 	private void initComponents() {
 		setTitle(DIALOG_TITLE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent we) {
-			}
-		});
-
-		headingLbl = new JLabel("Set how Photogator computes time intervals:");
-
-		radioBtnPnl = new JPanel();
-		radioBtnGrp = new ButtonGroup();
-		radioBtnPnl.setLayout(new BoxLayout(radioBtnPnl, BoxLayout.PAGE_AXIS));
-
+		headingLbl = new JLabel("Elapsed time computation method:");
 		consecutivePairsRadioBtn = new JRadioButton("Consecutive start-end pairs");
-		consecutivePairsRadioBtn.setActionCommand("consecutive-start-end");
-		//consecutivePairsRadioBtn.setEnabled(true);
-		radioBtnGrp.add(consecutivePairsRadioBtn);
-		radioBtnPnl.add(consecutivePairsRadioBtn);
-
 		firstStartAfterReadyRadioBtn = new JRadioButton("First start gate after ready");
-		firstStartAfterReadyRadioBtn.setActionCommand("first-start-after-ready");
-		//firstStartAfterReadyRadioBtn.setEnabled(true);
+
+		radioBtnGrp = new ButtonGroup();
+		radioBtnGrp.add(consecutivePairsRadioBtn);
 		radioBtnGrp.add(firstStartAfterReadyRadioBtn);
-		radioBtnPnl.add(firstStartAfterReadyRadioBtn);
-
-		radioBtnPnl.add(new JLabel(" "));	// spacer
-
-		okBtn = new JButton("OK");
-		okBtn.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				onOkBtn();
-			}
-		});
 
 		cancelBtn = new JButton("Cancel");
-		cancelBtn.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				onCancelBtn();
-			}
-		});
+		cancelBtn.setActionCommand(cancelBtn.getText());
+		cancelBtn.addActionListener(this);
 
-		okCancelPnl = new JPanel();
-		okCancelPnl.setLayout(new BoxLayout(okCancelPnl, BoxLayout.LINE_AXIS));
-		okCancelPnl.add(okBtn);
-		okCancelPnl.add(cancelBtn);
+		radioBtnBox = Box.createVerticalBox();
+		radioBtnBox.add(headingLbl);
+		radioBtnBox.add(Box.createVerticalStrut(3));
+		radioBtnBox.add(consecutivePairsRadioBtn);
+		radioBtnBox.add(firstStartAfterReadyRadioBtn);
+		radioBtnBox.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
 
-		add(headingLbl, BorderLayout.PAGE_START);
-		add(radioBtnPnl, BorderLayout.CENTER);
-		add(okCancelPnl, BorderLayout.PAGE_END);
+		okBtn = new JButton("OK");
+		okBtn.setActionCommand(okBtn.getText());
+		okBtn.addActionListener(this);
+		okBtn.setDefaultCapable(true);
+
+		okCancelBox = Box.createHorizontalBox();
+		okCancelBox.add(Box.createHorizontalGlue());
+		okCancelBox.add(okBtn);
+		okCancelBox.add(cancelBtn);
+		okCancelBox.add(Box.createHorizontalGlue());
+		okCancelBox.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
+
+		getRootPane().setDefaultButton(okBtn);
+		getRootPane().registerKeyboardAction(this,
+			KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+			JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+		getContentPane().add(radioBtnBox, BorderLayout.CENTER);
+		getContentPane().add(okCancelBox, BorderLayout.PAGE_END);
 		pack();
+		setLocationRelativeTo(getOwner());
+		
+		switch (etComputeMethod) {
+		case consecutiveStartEndPair:
+			consecutivePairsRadioBtn.setSelected(true);
+			break;
+		case firstStartAfterReady:
+			firstStartAfterReadyRadioBtn.setSelected(true);
+			break;
+		}
+		
+		setVisible(true);
 	}
 
-	private void onOkBtn() {
+	public void actionPerformed(ActionEvent evt) {
+		setVisible(false);
+		if (okBtn.getActionCommand().equals(evt.getActionCommand())) {
+			if (consecutivePairsRadioBtn.isSelected()) {
+				etComputeMethod = ElapsedTimeComputeMethod.consecutiveStartEndPair;
+			} else if (firstStartAfterReadyRadioBtn.isSelected()) {
+				etComputeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
+			}
+		}
 	}
 
-	private void onCancelBtn() {
+	public ElapsedTimeComputeMethod getElapsedTimeComputeMethod() {
+		return etComputeMethod;
 	}
 }
