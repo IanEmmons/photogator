@@ -3,7 +3,6 @@ package org.virginiaso.photogator;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,12 +93,7 @@ public class InitializationDialog extends JDialog {
 		progBar.setIndeterminate(true);
 
 		exitBtn = new JButton(EXIT_BTN_TEXT);
-		exitBtn.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				onExitBtn();
-			}
-		});
+		exitBtn.addActionListener(this::onExitBtn);
 
 		progAndExitBox = Box.createHorizontalBox();
 		progAndExitBox.add(progBar);
@@ -111,17 +105,12 @@ public class InitializationDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(getOwner());
 
-		timer = new Timer(TIMER_INTERVAL_MS, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				onTimerEvent();
-			}
-		});
+		timer = new Timer(TIMER_INTERVAL_MS, this::onTimerEvent);
 		timer.setInitialDelay(TIMER_INITIAL_DELAY_MS);
 		timer.start();
 	}
 
-	private void onTimerEvent() {
+	private void onTimerEvent(@SuppressWarnings("unused") ActionEvent evt) {
 		if (!isASerialPortPresent()) {
 			// Do nothing
 		} else if (isArduinoDetected()) {
@@ -170,7 +159,7 @@ public class InitializationDialog extends JDialog {
 		}
 	}
 
-	private void onExitBtn() {
+	private void onExitBtn(@SuppressWarnings("unused") ActionEvent evt) {
 		timer.stop();
 		foundSerialPort = null;
 		disconnectFromSerialPort();

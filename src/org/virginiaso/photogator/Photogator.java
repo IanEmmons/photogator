@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -143,39 +144,22 @@ public class Photogator extends JFrame {
 
 		toolBar.addSeparator();
 
-		readyBtn = createToolbarBtn(null, "Ready", "Ready for the next run", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				readyBtnAction(evt);
-			}
-		});
+		readyBtn = createToolbarBtn(null, "Ready", "Ready for the next run", this::readyBtnAction);
 		toolBar.add(readyBtn);
 
 		saveAndClearBtn = createToolbarBtn("saveAndClear", "Save and Clear",
-			"Save the log contents to a file and clear the log (cannot be undone)", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				saveBtnAction(evt);
-			}
-		});
+			"Save the log contents to a file and clear the log (cannot be undone)",
+			this::saveBtnAction);
 		toolBar.add(saveAndClearBtn);
 
 		toolBar.addSeparator();
 
-		settingsBtn = createToolbarBtn("settings", "Settings", APP_NAME + " settings", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				settingsBtnAction(evt);
-			}
-		});
+		settingsBtn = createToolbarBtn("settings", "Settings", APP_NAME + " settings",
+			this::settingsBtnAction);
 		toolBar.add(settingsBtn);
 
-		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				aboutBtnAction(evt);
-			}
-		});
+		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME,
+			this::aboutBtnAction);
 		toolBar.add(aboutBtn);
 
 		log = new JTextArea(200, 50);
@@ -245,7 +229,7 @@ public class Photogator extends JFrame {
 		saveAndClearBtn.setEnabled(isLogDirty);
 	}
 
-	private void windowOpenAction() {
+	void windowOpenAction() {
 		try {
 			String serialPortName = getExplicitSerialPortSelection();
 			if (serialPortName == null) {
@@ -275,7 +259,7 @@ public class Photogator extends JFrame {
 		}
 	}
 
-	private void windowClosingAction() {
+	void windowClosingAction() {
 		try {
 			if (portRdr != null) {
 				portRdr.close();
@@ -323,21 +307,22 @@ public class Photogator extends JFrame {
 		if (str == null) {
 			return null;
 		} else {
-			str = str.trim();
-			return (str.isEmpty()) ? null : str;
+			String strTrimmed = str.trim();
+			return (strTrimmed.isEmpty()) ? null : strTrimmed;
 		}
 	}
 
-	private void readyBtnAction(ActionEvent evt) {
+	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
+		//TODO: Implement this
 	}
 
-	private void saveBtnAction(ActionEvent evt) {
+	private void saveBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
 		if (log.getText().trim().isEmpty() || !isLogDirty()) {
 			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Nothing to save.");
 		} else {
 			String msg = String.format("Saving the display for team %1$s-%2$d and then clearing it",
 				divisionCombo.getSelectedItem(),
-				(Integer) teamNumSpinner.getValue());
+				teamNumSpinner.getValue());
 			int option = JOptionPane.showConfirmDialog(this,	// Parent window
 				msg,											// Message
 				APP_NAME,									// Title
@@ -361,7 +346,7 @@ public class Photogator extends JFrame {
 	private void saveDisplay() throws IOException {
 		if (ensureSessionDirExists()) {
 			String division = (String) divisionCombo.getSelectedItem();
-			int teamNum = (int) teamNumSpinner.getValue();
+			int teamNum = ((Integer) teamNumSpinner.getValue()).intValue();
 			int sessionNum = getNextSessionNumber(division, teamNum);
 			File newSessionFile = new File(SAVED_SESSION_DIR,
 				String.format(SAVED_SESSION_FILENM_FMT, division, teamNum, sessionNum));
@@ -395,9 +380,9 @@ public class Photogator extends JFrame {
 
 	private static int getNextSessionNumber(String division, int teamNum) {
 		return 1 + Arrays.stream(SAVED_SESSION_DIR.listFiles())
-			.filter(f -> f.isFile())
+			.filter(File::isFile)
 			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName()))
-			.filter(m -> m.matches())
+			.filter(Matcher::matches)
 			.filter(m -> division.equalsIgnoreCase(m.group(1)))
 			.filter(m -> teamNum == Integer.parseInt(m.group(2)))
 			.map(m -> Integer.parseInt(m.group(3)))
@@ -411,12 +396,12 @@ public class Photogator extends JFrame {
 		setLogDirty(false);
 	}
 
-	private void settingsBtnAction(ActionEvent evt) {
+	private void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
 		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
 		computeMethod = dlg.getElapsedTimeComputeMethod();
 	}
 
-	private void aboutBtnAction(ActionEvent evt) {
+	private void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
 		ImageIcon img = createIcon("app-icon", APP_NAME);
 		msgDlg(JOptionPane.INFORMATION_MESSAGE, img, ""
 			+ "%1$s%n"

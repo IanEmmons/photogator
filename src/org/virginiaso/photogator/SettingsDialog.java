@@ -1,8 +1,6 @@
 package org.virginiaso.photogator;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 import javax.swing.BorderFactory;
@@ -17,7 +15,7 @@ import javax.swing.JRadioButton;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
-public class SettingsDialog extends JDialog implements ActionListener {
+public class SettingsDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Settings";
 
@@ -51,7 +49,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
 		cancelBtn = new JButton("Cancel");
 		cancelBtn.setActionCommand(cancelBtn.getText());
-		cancelBtn.addActionListener(this);
+		cancelBtn.addActionListener(evt -> onCancelBtn());
 
 		radioBtnBox = Box.createVerticalBox();
 		radioBtnBox.add(headingLbl);
@@ -62,7 +60,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
 		okBtn = new JButton("OK");
 		okBtn.setActionCommand(okBtn.getText());
-		okBtn.addActionListener(this);
+		okBtn.addActionListener(evt -> onOkBtn());
 		okBtn.setDefaultCapable(true);
 
 		okCancelBox = Box.createHorizontalBox();
@@ -73,7 +71,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 		okCancelBox.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
 
 		getRootPane().setDefaultButton(okBtn);
-		getRootPane().registerKeyboardAction(this,
+		getRootPane().registerKeyboardAction(evt -> onCancelBtn(),
 			KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
 			JComponent.WHEN_IN_FOCUSED_WINDOW);
 
@@ -87,6 +85,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 			consecutivePairsRadioBtn.setSelected(true);
 			break;
 		case firstStartAfterReady:
+		default:
 			firstStartAfterReadyRadioBtn.setSelected(true);
 			break;
 		}
@@ -94,15 +93,17 @@ public class SettingsDialog extends JDialog implements ActionListener {
 		setVisible(true);
 	}
 
-	public void actionPerformed(ActionEvent evt) {
+	private void onOkBtn() {
 		setVisible(false);
-		if (okBtn.getActionCommand().equals(evt.getActionCommand())) {
-			if (consecutivePairsRadioBtn.isSelected()) {
-				etComputeMethod = ElapsedTimeComputeMethod.consecutiveStartEndPair;
-			} else if (firstStartAfterReadyRadioBtn.isSelected()) {
-				etComputeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
-			}
+		if (consecutivePairsRadioBtn.isSelected()) {
+			etComputeMethod = ElapsedTimeComputeMethod.consecutiveStartEndPair;
+		} else if (firstStartAfterReadyRadioBtn.isSelected()) {
+			etComputeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
 		}
+	}
+
+	private void onCancelBtn() {
+		setVisible(false);
 	}
 
 	public ElapsedTimeComputeMethod getElapsedTimeComputeMethod() {
