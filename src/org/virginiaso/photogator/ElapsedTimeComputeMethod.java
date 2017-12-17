@@ -1,6 +1,7 @@
 package org.virginiaso.photogator;
 
-public enum ElapsedTimeComputeMethod {
+public enum ElapsedTimeComputeMethod
+{
 	consecutiveStartEndPair,
 	firstStartAfterReady
 }

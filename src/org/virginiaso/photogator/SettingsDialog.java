@@ -15,7 +15,8 @@ import javax.swing.JRadioButton;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
-public class SettingsDialog extends JDialog {
+public class SettingsDialog extends JDialog
+{
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Settings";
 
@@ -29,13 +30,15 @@ public class SettingsDialog extends JDialog {
 	private JButton okBtn;
 	private Box okCancelBox;
 
-	public SettingsDialog(JFrame owner, ElapsedTimeComputeMethod elapsedTimeComputeMethod) {
-		super(owner, true);	// make's this a modal dialog
+	public SettingsDialog(JFrame owner, ElapsedTimeComputeMethod elapsedTimeComputeMethod)
+	{
+		super(owner, true); // makes this a modal dialog
 		etComputeMethod = elapsedTimeComputeMethod;
 		initComponents();
 	}
 
-	private void initComponents() {
+	private void initComponents()
+	{
 		setTitle(DIALOG_TITLE);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -79,8 +82,9 @@ public class SettingsDialog extends JDialog {
 		getContentPane().add(okCancelBox, BorderLayout.PAGE_END);
 		pack();
 		setLocationRelativeTo(getOwner());
-		
-		switch (etComputeMethod) {
+
+		switch (etComputeMethod)
+		{
 		case consecutiveStartEndPair:
 			consecutivePairsRadioBtn.setSelected(true);
 			break;
@@ -89,24 +93,30 @@ public class SettingsDialog extends JDialog {
 			firstStartAfterReadyRadioBtn.setSelected(true);
 			break;
 		}
-		
+
 		setVisible(true);
 	}
 
-	private void onOkBtn() {
+	private void onOkBtn()
+	{
 		setVisible(false);
-		if (consecutivePairsRadioBtn.isSelected()) {
+		if (consecutivePairsRadioBtn.isSelected())
+		{
 			etComputeMethod = ElapsedTimeComputeMethod.consecutiveStartEndPair;
-		} else if (firstStartAfterReadyRadioBtn.isSelected()) {
+		}
+		else if (firstStartAfterReadyRadioBtn.isSelected())
+		{
 			etComputeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
 		}
 	}
 
-	private void onCancelBtn() {
+	private void onCancelBtn()
+	{
 		setVisible(false);
 	}
 
-	public ElapsedTimeComputeMethod getElapsedTimeComputeMethod() {
+	public ElapsedTimeComputeMethod getElapsedTimeComputeMethod()
+	{
 		return etComputeMethod;
 	}
 }

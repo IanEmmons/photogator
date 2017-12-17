@@ -42,6 +42,8 @@ import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
 import org.virginiaso.serialport.ArduinoEvent;
@@ -50,7 +52,8 @@ import org.virginiaso.serialport.SerialPortReader;
 
 import jssc.SerialPortException;
 
-public class Photogator extends JFrame {
+public class Photogator extends JFrame
+{
 	private static final long serialVersionUID = 1L;
 	private static final String APP_NAME = "Photogator";
 	private static final String SERIAL_PORT_PROP = "serial.port";
@@ -69,8 +72,6 @@ public class Photogator extends JFrame {
 
 	static final PrintStream ERR_LOG;
 
-	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
-
 	private JToolBar toolBar;
 	private JLabel divisionLbl;
 	private JComboBox<String> divisionCombo;
@@ -85,15 +86,21 @@ public class Photogator extends JFrame {
 	private JToolBar statusBar;
 	private JLabel connectedLbl;
 
-	private BeamBrokenEvent lastEvent = null;
 	private SerialPortReader portRdr = null;
+	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
+	private boolean isInReadyState = false;
+	private BeamBrokenEvent applicableStartEvent = null;
 	private boolean isLogDirty = false;
 
-	static {
+	static
+	{
 		PrintStream errLog = System.out;
-		try {
+		try
+		{
 			errLog = new PrintStream(LOG_FILE, StandardCharsets.UTF_8.name());
-		} catch (IOException ex) {
+		}
+		catch (IOException ex)
+		{
 			ex.printStackTrace(errLog);
 		}
 		ERR_LOG = errLog;
@@ -101,25 +108,30 @@ public class Photogator extends JFrame {
 		ArduinoEvent.registerMsgType(BeamBrokenEvent.class);
 	}
 
-	public Photogator() {
+	public Photogator()
+	{
 		initComponents();
 		setLogDirty(false);
 	}
 
-	private void initComponents() {
+	private void initComponents()
+	{
 		setName(APP_NAME);
 		setTitle(APP_NAME);
 		ImageIcon appIcon = createIcon("app-icon24", APP_NAME);
 		setIconImage(appIcon.getImage());
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		addWindowListener(new WindowAdapter() {
+		addWindowListener(new WindowAdapter()
+		{
 			@Override
-			public void windowOpened(WindowEvent evt) {
+			public void windowOpened(WindowEvent evt)
+			{
 				windowOpenAction();
 			}
 
 			@Override
-			public void windowClosing(WindowEvent evt) {
+			public void windowClosing(WindowEvent evt)
+			{
 				windowClosingAction();
 			}
 		});
@@ -148,18 +160,15 @@ public class Photogator extends JFrame {
 		toolBar.add(readyBtn);
 
 		saveAndClearBtn = createToolbarBtn("saveAndClear", "Save and Clear",
-			"Save the log contents to a file and clear the log (cannot be undone)",
-			this::saveBtnAction);
+			"Save the log contents to a file and clear the log (cannot be undone)", this::saveBtnAction);
 		toolBar.add(saveAndClearBtn);
 
 		toolBar.addSeparator();
 
-		settingsBtn = createToolbarBtn("settings", "Settings", APP_NAME + " settings",
-			this::settingsBtnAction);
+		settingsBtn = createToolbarBtn("settings", "Settings", APP_NAME + " settings", this::settingsBtnAction);
 		toolBar.add(settingsBtn);
 
-		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME,
-			this::aboutBtnAction);
+		aboutBtn = createToolbarBtn("about", "About", "About " + APP_NAME, this::aboutBtnAction);
 		toolBar.add(aboutBtn);
 
 		log = new JTextArea(200, 50);
@@ -180,14 +189,18 @@ public class Photogator extends JFrame {
 		add(logScrollPane, BorderLayout.CENTER);
 		add(statusBar, BorderLayout.PAGE_END);
 		pack();
+
+		setToolbarStateAccordingToSettings();
 	}
 
-	private JButton createToolbarBtn(String imageName, String altText, String toolTipText, ActionListener listener) {
+	private JButton createToolbarBtn(String imageName, String altText, String toolTipText, ActionListener listener)
+	{
 		JButton btn = new JButton();
 		btn.setToolTipText(toolTipText);
 		btn.addActionListener(listener);
 		ImageIcon img = createIcon(imageName, altText);
-		if (img == null) {
+		if (img == null)
+		{
 			BufferedImage strut = new BufferedImage(1, 24, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g2 = strut.createGraphics();
 			g2.setColor(new Color(0, 0, 0, 0));
@@ -195,190 +208,242 @@ public class Photogator extends JFrame {
 			g2.dispose();
 			btn.setIcon(new ImageIcon(strut));
 			btn.setText(altText);
-		} else {
+		}
+		else
+		{
 			btn.setIcon(img);
 		}
 		return btn;
 	}
 
-	private ImageIcon createIcon(String path, String description) {
+	private ImageIcon createIcon(String path, String description)
+	{
 		URL imageURL = (path == null || path.isEmpty())
 			? null
 			: getClass().getResource(String.format("images/%1$s.png", path));
-		if (imageURL == null) {
+		if (imageURL == null)
+		{
 			ERR_LOG.format("Unable to find resource '%1$s'%n", path);
 			return null;
-		} else {
-			try {
+		}
+		else
+		{
+			try
+			{
 				Image img = ImageIO.read(imageURL);
 				img = img.getScaledInstance(24, 24, Image.SCALE_SMOOTH);
 				return new ImageIcon(img, description);
-			} catch (IOException ex) {
+			}
+			catch (IOException ex)
+			{
 				ex.printStackTrace();
 				return null;
 			}
 		}
 	}
 
-	private boolean isLogDirty() {
+	private boolean isLogDirty()
+	{
 		return isLogDirty;
 	}
 
-	private void setLogDirty(boolean newValue) {
+	private void setLogDirty(boolean newValue)
+	{
 		isLogDirty = newValue;
 		saveAndClearBtn.setEnabled(isLogDirty);
 	}
 
-	void windowOpenAction() {
-		try {
+	void windowOpenAction()
+	{
+		try
+		{
 			String serialPortName = getExplicitSerialPortSelection();
-			if (serialPortName == null) {
+			if (serialPortName == null)
+			{
 				InitializationDialog initDlg = new InitializationDialog(this);
-				if (initDlg.isASerialPortPresent()) {
+				if (initDlg.isASerialPortPresent())
+				{
 					initDlg.setVisible(true);
 					serialPortName = initDlg.getFoundSerialPort();
-				} else {
+				}
+				else
+				{
 					msgDlg(JOptionPane.ERROR_MESSAGE,
 						"No serial ports are present.%nPerhaps the photogates are not connected to the computer.");
 				}
 			}
 
-			if (serialPortName == null) {
+			if (serialPortName == null)
+			{
 				// User pressed the Exit button in the initialization dialog.
-				this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-			} else {
+				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			}
+			else
+			{
 				portRdr = new SerialPortReader(serialPortName, this::serialPortRecieveAction, ERR_LOG);
 				connectedLbl.setText(String.format(CONNECTED_MSG_FMT, serialPortName));
 			}
-		} catch (SerialPortException ex) {
+		}
+		catch (SerialPortException ex)
+		{
 			ex.printStackTrace(ERR_LOG);
 			connectedLbl.setText(NOT_CONNECTED_MSG);
-			msgDlg(JOptionPane.ERROR_MESSAGE,
-				"Unable to open serial port.  Detailed error message:%n%1$s%n%2$s",
+			msgDlg(JOptionPane.ERROR_MESSAGE, "Unable to open serial port.  Detailed error message:%n%1$s%n%2$s",
 				ex.getClass().getName(), ex.getMessage());
 		}
 	}
 
-	void windowClosingAction() {
-		try {
-			if (portRdr != null) {
+	void windowClosingAction()
+	{
+		try
+		{
+			if (portRdr != null)
+			{
 				portRdr.close();
 			}
-		} catch (SerialPortException ex) {
+		}
+		catch (SerialPortException ex)
+		{
 			ex.printStackTrace(ERR_LOG);
 		}
 	}
 
-	private static String getExplicitSerialPortSelection() {
+	private static String getExplicitSerialPortSelection()
+	{
 		String result = null;
-		if (PROPERTIES_FILE.exists() && PROPERTIES_FILE.isFile()) {
+		if (PROPERTIES_FILE.exists() && PROPERTIES_FILE.isFile())
+		{
 			Properties props = new Properties();
-			try (
-				InputStream in = new FileInputStream(PROPERTIES_FILE);
-				Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-			) {
+			try (InputStream in = new FileInputStream(PROPERTIES_FILE);
+				Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);)
+			{
 				props.load(rdr);
 				result = blankToNull(props.getProperty(SERIAL_PORT_PROP));
-			} catch (IOException ex) {
+			}
+			catch (IOException ex)
+			{
 				ex.printStackTrace(ERR_LOG);
 			}
 		}
 
-		if (result != null) {
-			ERR_LOG.format("Got serial port '%1$s' from properties file '%2$s'.%n",
-				result, PROPERTIES_FILE.getAbsolutePath());
-		} else {
+		if (result != null)
+		{
+			ERR_LOG.format("Got serial port '%1$s' from properties file '%2$s'.%n", result,
+				PROPERTIES_FILE.getAbsolutePath());
+		}
+		else
+		{
 			result = blankToNull(System.getProperty(SERIAL_PORT_PROP));
 		}
 
-		if (result != null) {
+		if (result != null)
+		{
 			ERR_LOG.format("Got serial port '%1$s' from system properties.%n", result);
-		} else {
+		}
+		else
+		{
 			result = blankToNull(System.getenv(SERIAL_PORT_ENV_VAR));
 		}
 
-		if (result != null) {
+		if (result != null)
+		{
 			ERR_LOG.format("Got serial port '%1$s' from environment.%n", result);
 		}
 		return result;
 	}
 
-	private static String blankToNull(String str) {
-		if (str == null) {
+	private static String blankToNull(String str)
+	{
+		if (str == null)
+		{
 			return null;
-		} else {
+		}
+		else
+		{
 			String strTrimmed = str.trim();
 			return (strTrimmed.isEmpty()) ? null : strTrimmed;
 		}
 	}
 
-	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
-		//TODO: Implement this
+	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	{
+		isInReadyState = true;
+		applicableStartEvent = null;
 	}
 
-	private void saveBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
-		if (log.getText().trim().isEmpty() || !isLogDirty()) {
+	private void saveBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	{
+		if (log.getText().trim().isEmpty() || !isLogDirty())
+		{
 			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Nothing to save.");
-		} else {
-			String msg = String.format("Saving the display for team %1$s-%2$d and then clearing it",
-				divisionCombo.getSelectedItem(),
-				teamNumSpinner.getValue());
-			int option = JOptionPane.showConfirmDialog(this,	// Parent window
-				msg,											// Message
-				APP_NAME,									// Title
-				JOptionPane.OK_CANCEL_OPTION,				// Button choices
-				JOptionPane.QUESTION_MESSAGE);				// Icon
+		}
+		else
+		{
+			int option = confirmDlg(JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
+				"Saving the display for team %1$s-%2$d and then clearing it",
+				divisionCombo.getSelectedItem(), teamNumSpinner.getValue());
 
-			if (option == JOptionPane.OK_OPTION) {
-				try {
+			if (option == JOptionPane.OK_OPTION)
+			{
+				try
+				{
 					saveDisplay();
 					clearDisplay();
-				} catch (IOException ex) {
+				}
+				catch (IOException ex)
+				{
 					ex.printStackTrace(ERR_LOG);
-					msgDlg(JOptionPane.ERROR_MESSAGE,
-						"Unable to save display.  Detailed error message:%n%1$s%n%2$s",
+					msgDlg(JOptionPane.ERROR_MESSAGE, "Unable to save display.  Detailed error message:%n%1$s%n%2$s",
 						ex.getClass().getName(), ex.getMessage());
 				}
 			}
 		}
 	}
 
-	private void saveDisplay() throws IOException {
-		if (ensureSessionDirExists()) {
+	private void saveDisplay() throws IOException
+	{
+		if (ensureSessionDirExists())
+		{
 			String division = (String) divisionCombo.getSelectedItem();
 			int teamNum = ((Integer) teamNumSpinner.getValue()).intValue();
 			int sessionNum = getNextSessionNumber(division, teamNum);
 			File newSessionFile = new File(SAVED_SESSION_DIR,
 				String.format(SAVED_SESSION_FILENM_FMT, division, teamNum, sessionNum));
-			try (
-				BufferedWriter wtr = Files.newBufferedWriter(newSessionFile.toPath(),
-					StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)
-			) {
+			try (BufferedWriter wtr = Files.newBufferedWriter(newSessionFile.toPath(), StandardCharsets.UTF_8,
+				StandardOpenOption.CREATE_NEW))
+			{
 				wtr.write(log.getText());
 			}
 			setLogDirty(false);
 		}
 	}
 
-	private static boolean ensureSessionDirExists() {
+	private static boolean ensureSessionDirExists()
+	{
 		boolean sessionDirExists = false;
-		if (!SAVED_SESSION_DIR.exists()) {
+		if (!SAVED_SESSION_DIR.exists())
+		{
 			SAVED_SESSION_DIR.mkdirs();
 			sessionDirExists = true;
-		} else if (!SAVED_SESSION_DIR.isDirectory()) {
-			String msg = String.format(""
+		}
+		else if (!SAVED_SESSION_DIR.isDirectory())
+		{
+			msgDlg(
+				null, JOptionPane.ERROR_MESSAGE, null, ""
 				+ "Unable to create the directory for saved sessions,%n"
 				+ "     %1$s%n"
 				+ "because it already exists, but is not a directory",
 				SAVED_SESSION_DIR.getAbsolutePath());
-			JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
-		} else {
+		}
+		else
+		{
 			sessionDirExists = true;
 		}
 		return sessionDirExists;
 	}
 
-	private static int getNextSessionNumber(String division, int teamNum) {
+	private static int getNextSessionNumber(String division, int teamNum)
+	{
 		return 1 + Arrays.stream(SAVED_SESSION_DIR.listFiles())
 			.filter(File::isFile)
 			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName()))
@@ -390,18 +455,27 @@ public class Photogator extends JFrame {
 			.orElse(-1);
 	}
 
-	private void clearDisplay() {
+	private void clearDisplay()
+	{
 		log.setText("");
 		log.setCaretPosition(0);
 		setLogDirty(false);
 	}
 
-	private void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
+	private void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	{
 		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
 		computeMethod = dlg.getElapsedTimeComputeMethod();
+		setToolbarStateAccordingToSettings();
 	}
 
-	private void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt) {
+	private void setToolbarStateAccordingToSettings()
+	{
+		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.firstStartAfterReady);
+	}
+
+	private void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	{
 		ImageIcon img = createIcon("app-icon", APP_NAME);
 		msgDlg(JOptionPane.INFORMATION_MESSAGE, img, ""
 			+ "%1$s%n"
@@ -414,11 +488,15 @@ public class Photogator extends JFrame {
 			APP_NAME, getPortNames());
 	}
 
-	private static String getPortNames() {
+	private static String getPortNames()
+	{
 		String[] portNames = InitializationDialog.getSerialPortNames();
-		if (portNames == null || portNames.length == 0) {
+		if (portNames == null || portNames.length == 0)
+		{
 			return "There are no available serial ports.";
-		} else {
+		}
+		else
+		{
 			return Arrays.stream(portNames).collect(Collectors.joining(
 				String.format("%n   "),
 				String.format("Available serial ports:%n   "),
@@ -426,46 +504,111 @@ public class Photogator extends JFrame {
 		}
 	}
 
-	private void serialPortRecieveAction(String msg) {
+	private void serialPortRecieveAction(String msg)
+	{
 		ArduinoEvent evt = ArduinoEvent.parse(msg);
-		if (evt == null) {
-			log.append(String.format("Error:  Unrecognized message format:  \"%1$s\"%n", msg));
-			log.setCaretPosition(log.getDocument().getLength());
-			setLogDirty(true);
-		} else if (evt instanceof HeartBeatEvent) {
-			// Do nothing
-		} else if (evt instanceof BeamBrokenEvent) {
-			BeamBrokenEvent bbEvt = (BeamBrokenEvent) evt;
-			log.append(bbEvt.format());
-			if (bbEvt.follows(lastEvent)) {
-				log.append(bbEvt.difference(lastEvent));
+		if (evt == null)
+		{
+			appendToLog(String.format("Error:  Unrecognized message format:  \"%1$s\"%n", msg));
+		}
+		else
+		{
+			appendToLog(evt.format());
+			if (evt instanceof BeamBrokenEvent)
+			{
+				BeamBrokenEvent thisEvt = (BeamBrokenEvent) evt;
+				if (computeMethod == ElapsedTimeComputeMethod.firstStartAfterReady)
+				{
+					if (isInReadyState
+						&& applicableStartEvent == null
+						&& thisEvt.getSensorId() == SensorId.START)
+					{
+						applicableStartEvent = thisEvt;
+					}
+					// TODO: Implement this!
+				}
+				else if (computeMethod == ElapsedTimeComputeMethod.consecutiveStartEndPair)
+				{
+					if (applicableStartEvent != null
+						&& applicableStartEvent.getSensorId() == SensorId.START
+						&& thisEvt.getSensorId() == SensorId.FINISH)
+					{
+						appendToLog(thisEvt.formatDifference(applicableStartEvent));
+						applicableStartEvent = null;
+					}
+					else if (thisEvt.getSensorId() == SensorId.START)
+					{
+						applicableStartEvent = thisEvt;
+					}
+				}
 			}
-			log.setCaretPosition(log.getDocument().getLength());
-			setLogDirty(true);
-			lastEvent = bbEvt;
 		}
 	}
 
-	private void msgDlg(int msgType, String fmt, Object... args) {
+	private void appendToLog(String msg)
+	{
+		if (msg != null && !msg.isEmpty())
+		{
+			log.append(msg);
+			setLogDirty(true);
+			log.setCaretPosition(log.getDocument().getLength());
+		}
+	}
+
+	private void msgDlg(int msgType, String fmt, Object... args)
+	{
 		msgDlg(msgType, null, fmt, args);
 	}
 
-	private void msgDlg(int msgType, ImageIcon img, String fmt, Object... args) {
-		String title = APP_NAME;
+	private void msgDlg(int msgType, ImageIcon img, String fmt, Object... args)
+	{
+		msgDlg(this, msgType, img, fmt, args);
+	}
+
+	private static void msgDlg(JFrame parent, int msgType, ImageIcon img, String fmt, Object... args)
+	{
 		String msg = String.format(fmt, args);
-		if (img == null) {
-			JOptionPane.showMessageDialog(this, msg, title, msgType);
-		} else {
-			JOptionPane.showMessageDialog(this, msg, title, msgType, img);
+		if (img == null)
+		{
+			JOptionPane.showMessageDialog(parent, msg, APP_NAME, msgType);
+		}
+		else
+		{
+			JOptionPane.showMessageDialog(parent, msg, APP_NAME, msgType, img);
 		}
 	}
 
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				new Photogator().setVisible(true);
-			}
-		});
+	private int confirmDlg(int msgType, int btnChoices, String fmt, Object... args)
+	{
+		return JOptionPane.showConfirmDialog(this,	// Parent window
+			String.format(fmt, args),					// Message
+			APP_NAME,											// Title
+			btnChoices,										// Option type determines button choices
+			msgType);											// Message type determines icon
+	}
+
+	public static void main(String[] args)
+	{
+		try
+		{
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+			EventQueue.invokeLater(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					new Photogator().setVisible(true);
+				}
+			});
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+			| UnsupportedLookAndFeelException ex)
+		{
+			ex.printStackTrace(ERR_LOG);
+			msgDlg(null, JOptionPane.ERROR_MESSAGE, null,
+				"Unable to set look and feel.  Detailed error message:%n%1$s%n%2$s", ex.getClass().getName(),
+				ex.getMessage());
+		}
 	}
 }

@@ -27,7 +27,8 @@ import org.virginiaso.serialport.SerialPortReader;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
-public class InitializationDialog extends JDialog {
+public class InitializationDialog extends JDialog
+{
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Connecting...";
 	private static final String HEADING_TEXT = "Searching for photogates on serial port:          ";
@@ -37,9 +38,8 @@ public class InitializationDialog extends JDialog {
 	private static final Object LOCK = new Object();
 
 	/*
-	 * Five seconds may seem excessive, but it takes the Arduino
-	 * a considerable time (about 2.5 seconds) to "wake up" after
-	 * the serial port connection is made.
+	 * Five seconds may seem excessive, but it takes the Arduino a considerable time
+	 * (about 2.5 seconds) to "wake up" after the serial port connection is made.
 	 */
 	private static final long TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS = 5000;
 
@@ -57,12 +57,14 @@ public class InitializationDialog extends JDialog {
 	private boolean arduinoDetected = false;
 	private String foundSerialPort = null;
 
-	public InitializationDialog(JFrame frame) {
-		super(frame, true);	// make's this a modal dialog
+	public InitializationDialog(JFrame frame)
+	{
+		super(frame, true); // make's this a modal dialog
 		initComponents();
 	}
 
-	private void initComponents() {
+	private void initComponents()
+	{
 		setTitle(DIALOG_TITLE);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -110,15 +112,21 @@ public class InitializationDialog extends JDialog {
 		timer.start();
 	}
 
-	private void onTimerEvent(@SuppressWarnings("unused") ActionEvent evt) {
-		if (!isASerialPortPresent()) {
+	private void onTimerEvent(@SuppressWarnings("unused") ActionEvent evt)
+	{
+		if (!isASerialPortPresent())
+		{
 			// Do nothing
-		} else if (isArduinoDetected()) {
+		}
+		else if (isArduinoDetected())
+		{
 			timer.stop();
 			foundSerialPort = portRdr.getSerialPortName();
 			disconnectFromSerialPort();
 			setVisible(false);
-		} else if (System.currentTimeMillis() - currentRadioBtnStartTime > TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS) {
+		}
+		else if (System.currentTimeMillis() - currentRadioBtnStartTime > TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS)
+		{
 			// Terminate existing serial port connection, if any:
 			disconnectFromSerialPort();
 
@@ -131,62 +139,82 @@ public class InitializationDialog extends JDialog {
 			String portName = currentBtn.getActionCommand();
 
 			// Connect to portName:
-			try {
+			try
+			{
 				portRdr = new SerialPortReader(portName, this::serialPortRecieveAction, Photogator.ERR_LOG);
-			} catch (SerialPortException ex) {
+			}
+			catch (SerialPortException ex)
+			{
 				ex.printStackTrace(Photogator.ERR_LOG);
 			}
 		}
 	}
 
-	private void serialPortRecieveAction(String msg) {
+	private void serialPortRecieveAction(String msg)
+	{
 		ArduinoEvent evt = ArduinoEvent.parse(msg);
-		if (evt == null) {
+		if (evt == null)
+		{
 			Photogator.ERR_LOG.format("Unrecognized message '%1$s'%n", msg);
-		} else if (evt instanceof HeartBeatEvent || evt instanceof BeamBrokenEvent) {
+		}
+		else if (evt instanceof HeartBeatEvent || evt instanceof BeamBrokenEvent)
+		{
 			setArduinoDetected(true);
 		}
 	}
 
-	private void disconnectFromSerialPort() {
-		if (portRdr != null) {
-			try {
+	private void disconnectFromSerialPort()
+	{
+		if (portRdr != null)
+		{
+			try
+			{
 				portRdr.close();
-			} catch (SerialPortException ex) {
+			}
+			catch (SerialPortException ex)
+			{
 				ex.printStackTrace(Photogator.ERR_LOG);
 			}
 			portRdr = null;
 		}
 	}
 
-	private void onExitBtn(@SuppressWarnings("unused") ActionEvent evt) {
+	private void onExitBtn(@SuppressWarnings("unused") ActionEvent evt)
+	{
 		timer.stop();
 		foundSerialPort = null;
 		disconnectFromSerialPort();
 		setVisible(false);
 	}
 
-	private boolean isArduinoDetected() {
-		synchronized (LOCK) {
+	private boolean isArduinoDetected()
+	{
+		synchronized (LOCK)
+		{
 			return arduinoDetected;
 		}
 	}
 
-	private void setArduinoDetected(boolean newValue) {
-		synchronized (LOCK) {
+	private void setArduinoDetected(boolean newValue)
+	{
+		synchronized (LOCK)
+		{
 			arduinoDetected = newValue;
 		}
 	}
 
-	public boolean isASerialPortPresent() {
+	public boolean isASerialPortPresent()
+	{
 		return serialPortBtns.size() > 0;
 	}
 
-	public String getFoundSerialPort() {
+	public String getFoundSerialPort()
+	{
 		return foundSerialPort;
 	}
 
-	public static String[] getSerialPortNames() {
+	public static String[] getSerialPortNames()
+	{
 		return SerialPortList.getPortNames();
 	}
 }

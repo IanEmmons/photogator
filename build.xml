@@ -21,7 +21,7 @@
 		<touch file="${resolveFlagFile}" mkdirs="true"/>
 	</target>
 
-	<target name="report" depends="resolve">
+	<target name="report" depends="resolve" description="Create dependency report">
 		<ivy:report todir="${reportDir}"/>
 	</target>
 
@@ -42,7 +42,7 @@
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile">
+	<target name="jar" depends="compile" description="Build Photogator">
 		<unjar src="${libDir}/jssc-2.8.0.jar" dest="${binDir}"/>
 		<delete dir="${binDir}/META-INF"/>
 		<mkdir dir="${deployableDir}"/>
@@ -56,7 +56,7 @@
 		</copy>
 	</target>
 
-	<target name="clean">
+	<target name="clean" description="Clean up build products">
 		<delete dir="${binDir}"/>
 		<delete dir="${libDir}"/>
 		<delete dir="${deployableDir}"/>
