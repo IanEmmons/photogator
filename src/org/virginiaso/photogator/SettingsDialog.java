@@ -32,14 +32,13 @@ public class SettingsDialog extends JDialog
 
 	public SettingsDialog(JFrame owner, ElapsedTimeComputeMethod elapsedTimeComputeMethod)
 	{
-		super(owner, true); // makes this a modal dialog
+		super(owner, DIALOG_TITLE, true); // true makes this a modal dialog
 		etComputeMethod = elapsedTimeComputeMethod;
 		initComponents();
 	}
 
 	private void initComponents()
 	{
-		setTitle(DIALOG_TITLE);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		headingLbl = new JLabel("Elapsed time computation method:");
@@ -85,10 +84,10 @@ public class SettingsDialog extends JDialog
 
 		switch (etComputeMethod)
 		{
-		case consecutiveStartEndPair:
+		case CONSECUTIVE_START_END_PAIR:
 			consecutivePairsRadioBtn.setSelected(true);
 			break;
-		case firstStartAfterReady:
+		case FIRST_START_AFTER_READY:
 		default:
 			firstStartAfterReadyRadioBtn.setSelected(true);
 			break;
@@ -102,11 +101,11 @@ public class SettingsDialog extends JDialog
 		setVisible(false);
 		if (consecutivePairsRadioBtn.isSelected())
 		{
-			etComputeMethod = ElapsedTimeComputeMethod.consecutiveStartEndPair;
+			etComputeMethod = ElapsedTimeComputeMethod.CONSECUTIVE_START_END_PAIR;
 		}
 		else if (firstStartAfterReadyRadioBtn.isSelected())
 		{
-			etComputeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
+			etComputeMethod = ElapsedTimeComputeMethod.FIRST_START_AFTER_READY;
 		}
 	}
 

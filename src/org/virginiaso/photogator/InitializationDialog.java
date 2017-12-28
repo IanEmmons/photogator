@@ -59,13 +59,12 @@ public class InitializationDialog extends JDialog
 
 	public InitializationDialog(JFrame frame)
 	{
-		super(frame, true); // make's this a modal dialog
+		super(frame, DIALOG_TITLE, true); // make's this a modal dialog
 		initComponents();
 	}
 
 	private void initComponents()
 	{
-		setTitle(DIALOG_TITLE);
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		headingLbl = new JLabel(HEADING_TEXT);
@@ -76,7 +75,7 @@ public class InitializationDialog extends JDialog
 		serialPortBtnBox.add(Box.createVerticalStrut(3));
 
 		Font btnFont = new Font(Font.MONOSPACED, Font.PLAIN, headingLbl.getFont().getSize());
-		serialPortBtns = Arrays.stream(getSerialPortNames())
+		serialPortBtns = Arrays.stream(SerialPortList.getPortNames())
 			.sorted()
 			.distinct()
 			.map(portName -> {
@@ -211,10 +210,5 @@ public class InitializationDialog extends JDialog
 	public String getFoundSerialPort()
 	{
 		return foundSerialPort;
-	}
-
-	public static String[] getSerialPortNames()
-	{
-		return SerialPortList.getPortNames();
 	}
 }

@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -50,12 +49,15 @@ import org.virginiaso.serialport.ArduinoEvent;
 import org.virginiaso.serialport.HeartBeatEvent;
 import org.virginiaso.serialport.SerialPortReader;
 
+import com.apple.eawt.Application;
+
 import jssc.SerialPortException;
 
 public class Photogator extends JFrame
 {
 	private static final long serialVersionUID = 1L;
-	private static final String APP_NAME = "Photogator";
+	public static final String APP_NAME = "Photogator";
+	private static final int TOOLBAR_IMAGE_SIZE = 24;
 	private static final String SERIAL_PORT_PROP = "serial.port";
 	private static final String SERIAL_PORT_ENV_VAR = "ARDUINO_SERIAL_PORT";
 	private static final File PROPERTIES_FILE = new File("SerialPort.properties");
@@ -87,8 +89,7 @@ public class Photogator extends JFrame
 	private JLabel connectedLbl;
 
 	private SerialPortReader portRdr = null;
-	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.firstStartAfterReady;
-	private boolean isInReadyState = false;
+	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.FIRST_START_AFTER_READY;
 	private BeamBrokenEvent applicableStartEvent = null;
 	private boolean isLogDirty = false;
 
@@ -118,7 +119,7 @@ public class Photogator extends JFrame
 	{
 		setName(APP_NAME);
 		setTitle(APP_NAME);
-		ImageIcon appIcon = createIcon("app-icon24", APP_NAME);
+		ImageIcon appIcon = getRsrcAsIcon("app-icon24", APP_NAME);
 		setIconImage(appIcon.getImage());
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		addWindowListener(new WindowAdapter()
@@ -191,55 +192,75 @@ public class Photogator extends JFrame
 		pack();
 
 		setToolbarStateAccordingToSettings();
+
+		if (isMacOsX()) {
+			Application.getApplication().setAboutHandler(evt -> aboutBtnAction(null));
+			Application.getApplication().setPreferencesHandler(evt -> settingsBtnAction(null));
+		}
 	}
 
-	private JButton createToolbarBtn(String imageName, String altText, String toolTipText, ActionListener listener)
+	private static JButton createToolbarBtn(String imageName, String altText,
+		String toolTipText, ActionListener listener)
 	{
 		JButton btn = new JButton();
 		btn.setToolTipText(toolTipText);
 		btn.addActionListener(listener);
-		ImageIcon img = createIcon(imageName, altText);
-		if (img == null)
+		if (imageName == null || imageName.isEmpty())
 		{
-			BufferedImage strut = new BufferedImage(1, 24, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g2 = strut.createGraphics();
-			g2.setColor(new Color(0, 0, 0, 0));
-			g2.fillRect(0, 0, 1, 24);
-			g2.dispose();
-			btn.setIcon(new ImageIcon(strut));
+			btn.setIcon(createStrutIcon(altText));
 			btn.setText(altText);
 		}
 		else
 		{
-			btn.setIcon(img);
+			btn.setIcon(getRsrcAsIcon(imageName, altText));
 		}
 		return btn;
 	}
 
-	private ImageIcon createIcon(String path, String description)
+	private static ImageIcon createStrutIcon(String description)
 	{
-		URL imageURL = (path == null || path.isEmpty())
-			? null
-			: getClass().getResource(String.format("images/%1$s.png", path));
+		BufferedImage strut = new BufferedImage(1, TOOLBAR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = strut.createGraphics();
+		g.setColor(new Color(0, 0, 0, 0));
+		g.fillRect(0, 0, 1, TOOLBAR_IMAGE_SIZE);
+		g.dispose();
+		return new ImageIcon(strut, description);
+	}
+
+	private static ImageIcon getRsrcAsIcon(String rsrcName, String description)
+	{
+		ImageIcon result = null;
+
+		Image img = loadImageRsrc(rsrcName);
+		if (img != null)
+		{
+			img = img.getScaledInstance(TOOLBAR_IMAGE_SIZE, TOOLBAR_IMAGE_SIZE, Image.SCALE_SMOOTH);
+			result = new ImageIcon(img, description);
+		}
+		return result;
+	}
+
+	public static Image loadImageRsrc(String rsrcName)
+	{
+		Image result = null;
+		String rsrcPath = String.format("images/%1$s.png", rsrcName);
+		URL imageURL = ImagePanel.class.getResource(rsrcPath);
 		if (imageURL == null)
 		{
-			ERR_LOG.format("Unable to find resource '%1$s'%n", path);
-			return null;
+			ERR_LOG.format("Unable to find resource '%1$s'%n", rsrcPath);
 		}
 		else
 		{
 			try
 			{
-				Image img = ImageIO.read(imageURL);
-				img = img.getScaledInstance(24, 24, Image.SCALE_SMOOTH);
-				return new ImageIcon(img, description);
+				result = ImageIO.read(imageURL);
 			}
 			catch (IOException ex)
 			{
-				ex.printStackTrace();
-				return null;
+				ex.printStackTrace(ERR_LOG);
 			}
 		}
+		return result;
 	}
 
 	private boolean isLogDirty()
@@ -367,7 +388,6 @@ public class Photogator extends JFrame
 
 	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
-		isInReadyState = true;
 		applicableStartEvent = null;
 	}
 
@@ -389,6 +409,7 @@ public class Photogator extends JFrame
 				{
 					saveDisplay();
 					clearDisplay();
+					applicableStartEvent = null;
 				}
 				catch (IOException ex)
 				{
@@ -462,7 +483,7 @@ public class Photogator extends JFrame
 		setLogDirty(false);
 	}
 
-	private void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
 		computeMethod = dlg.getElapsedTimeComputeMethod();
@@ -471,37 +492,13 @@ public class Photogator extends JFrame
 
 	private void setToolbarStateAccordingToSettings()
 	{
-		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.firstStartAfterReady);
+		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY);
 	}
 
-	private void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
-		ImageIcon img = createIcon("app-icon", APP_NAME);
-		msgDlg(JOptionPane.INFORMATION_MESSAGE, img, ""
-			+ "%1$s%n"
-			+ "Photo-gate timing software%n"
-			+ "%n"
-			+ "© 2017, Virginia Science Olympiad.%n"
-			+ "All rights reserved.%n"
-			+ "%n"
-			+ "%2$s",
-			APP_NAME, getPortNames());
-	}
-
-	private static String getPortNames()
-	{
-		String[] portNames = InitializationDialog.getSerialPortNames();
-		if (portNames == null || portNames.length == 0)
-		{
-			return "There are no available serial ports.";
-		}
-		else
-		{
-			return Arrays.stream(portNames).collect(Collectors.joining(
-				String.format("%n   "),
-				String.format("Available serial ports:%n   "),
-				""));
-		}
+		@SuppressWarnings("unused")
+		AboutDialog dlg = new AboutDialog(this);
 	}
 
 	private void serialPortRecieveAction(String msg)
@@ -517,29 +514,36 @@ public class Photogator extends JFrame
 			if (evt instanceof BeamBrokenEvent)
 			{
 				BeamBrokenEvent thisEvt = (BeamBrokenEvent) evt;
-				if (computeMethod == ElapsedTimeComputeMethod.firstStartAfterReady)
+				if (computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY)
 				{
-					if (isInReadyState
-						&& applicableStartEvent == null
-						&& thisEvt.getSensorId() == SensorId.START)
+					if (thisEvt.getSensorId() == SensorId.START
+						&& applicableStartEvent == null)
 					{
 						applicableStartEvent = thisEvt;
 					}
-					// TODO: Implement this!
-				}
-				else if (computeMethod == ElapsedTimeComputeMethod.consecutiveStartEndPair)
-				{
-					if (applicableStartEvent != null
-						&& applicableStartEvent.getSensorId() == SensorId.START
-						&& thisEvt.getSensorId() == SensorId.FINISH)
+					else if (thisEvt.getSensorId() == SensorId.FINISH
+						&& applicableStartEvent != null)
 					{
 						appendToLog(thisEvt.formatDifference(applicableStartEvent));
 						applicableStartEvent = null;
 					}
-					else if (thisEvt.getSensorId() == SensorId.START)
+				}
+				else if (computeMethod == ElapsedTimeComputeMethod.CONSECUTIVE_START_END_PAIR)
+				{
+					if (thisEvt.getSensorId() == SensorId.START)
 					{
 						applicableStartEvent = thisEvt;
 					}
+					else if (thisEvt.getSensorId() == SensorId.FINISH
+						&& applicableStartEvent != null)
+					{
+						appendToLog(thisEvt.formatDifference(applicableStartEvent));
+						applicableStartEvent = null;
+					}
+				}
+				else
+				{
+					throw new IllegalStateException(String.format("Unknown compute method '%1$s'", computeMethod));
 				}
 			}
 		}
@@ -565,7 +569,7 @@ public class Photogator extends JFrame
 		msgDlg(this, msgType, img, fmt, args);
 	}
 
-	private static void msgDlg(JFrame parent, int msgType, ImageIcon img, String fmt, Object... args)
+	public static void msgDlg(JFrame parent, int msgType, ImageIcon img, String fmt, Object... args)
 	{
 		String msg = String.format(fmt, args);
 		if (img == null)
@@ -585,6 +589,12 @@ public class Photogator extends JFrame
 			APP_NAME,											// Title
 			btnChoices,										// Option type determines button choices
 			msgType);											// Message type determines icon
+	}
+
+	private static boolean isMacOsX()
+	{
+		String osName = System.getProperty("os.name");
+		return osName != null && osName.toLowerCase().startsWith("mac os x");
 	}
 
 	public static void main(String[] args)
