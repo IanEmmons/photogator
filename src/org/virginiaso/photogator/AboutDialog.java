@@ -8,7 +8,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -19,24 +22,20 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.WindowConstants;
-import javax.swing.text.html.HTMLEditorKit;
 
 import jssc.SerialPortList;
 
 public class AboutDialog extends JDialog
 {
 	private static final long serialVersionUID = 1L;
-	private static final boolean SHOW_STYLED_MSG_CONTENT = false;
 	private static final String DIALOG_TITLE = "About %1$s";
+	private static final String ABOUT_MSG_CONTENT_RSRC = "AboutMessage.html";
 
 	private ImagePanel imgPanel;
-	private JTextArea msgText;
 	private JEditorPane msgPane;
 	private JScrollPane msgScrollPane;
 	private Box contentBox;
@@ -55,42 +54,22 @@ public class AboutDialog extends JDialog
 
 		imgPanel = new ImagePanel("app-icon");
 
-		msgText = new JTextArea(String.format(""
-			+ "%1$s%n"
-			+ "Timing software for use with Virginia Science Olympiad’s photo gates.%n"
-			+ "%n"
-			+ "© 2017, Virginia Science Olympiad.%n"
-			+ "All rights reserved.%n"
-			+ "%n"
-			+ "%2$s",
-			Photogator.APP_NAME, getPortNames()));
-		msgText.setEditable(false);
-
-		//msgPane = new JEditorPane("text/html", createTextContent());
 		msgPane = new JEditorPane();
-		msgPane.setEditorKit(new HTMLEditorKit());
-		msgPane.setContentType("text/html");
-		msgPane.setText(createTextContent());
 		msgPane.setEditable(false);
-		if (SHOW_STYLED_MSG_CONTENT)
-		{
-			Photogator.msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, createTextContent());
-		}
+		setMsgContent();
 
 		msgScrollPane = new JScrollPane(msgPane);
 		msgScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		msgScrollPane.setPreferredSize(imgPanel.getPreferredSize());
+		Dimension prefSize = new Dimension(
+			(int) Math.round(1.618 * imgPanel.getPreferredSize().getWidth()),
+			(int) Math.round(imgPanel.getPreferredSize().getHeight()));
+		msgScrollPane.setPreferredSize(prefSize);
 		msgScrollPane.setMinimumSize(new Dimension(10, 10));
 
 		contentBox = Box.createHorizontalBox();
 		contentBox.add(imgPanel);
 		contentBox.add(Box.createHorizontalStrut(3));
-		contentBox.add(msgText);
-		if (SHOW_STYLED_MSG_CONTENT)
-		{
-			contentBox.add(Box.createHorizontalStrut(3));
-			contentBox.add(msgScrollPane);
-		}
+		contentBox.add(msgScrollPane);
 		contentBox.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
 
 		okBtn = new JButton("OK");
@@ -117,43 +96,32 @@ public class AboutDialog extends JDialog
 		setVisible(true);
 	}
 
-	private static String createTextContent()
+	private void setMsgContent()
 	{
 		try
-		(
-			InputStream in = AboutDialog.class.getResourceAsStream("AboutMessage.html");
-			InputStreamReader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-			BufferedReader brdr = new BufferedReader(rdr);
-		)
 		{
-			String htmlFmt = brdr.lines().collect(Collectors.joining(System.lineSeparator()));
-			return String.format(htmlFmt, Photogator.APP_NAME, getPortNamesHtml());
+			String content;
+			try
+			(
+				InputStream in = AboutDialog.class.getResourceAsStream(ABOUT_MSG_CONTENT_RSRC);
+				InputStreamReader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
+				BufferedReader brdr = new BufferedReader(rdr);
+			)
+			{
+				content = brdr.lines().collect(Collectors.joining(System.lineSeparator()));
+			}
+
+			Path tmpPath = Files.createTempFile("PhotogatorAboutMessage", ".html");
+			try (PrintWriter pwtr = new PrintWriter(tmpPath.toFile(), StandardCharsets.UTF_8.name()))
+			{
+				pwtr.format(content, Photogator.APP_NAME, getPortNamesHtml());
+			}
+
+			msgPane.setPage(tmpPath.toUri().toURL());
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace(Photogator.ERR_LOG);
-			return ex.toString();
-		}
-	}
-
-	private void onOkBtn(@SuppressWarnings("unused") ActionEvent evt)
-	{
-		setVisible(false);
-	}
-
-	public static String getPortNames()
-	{
-		String[] portNames = SerialPortList.getPortNames();
-		if (portNames == null || portNames.length == 0)
-		{
-			return "There are no available serial ports.";
-		}
-		else
-		{
-			return Arrays.stream(portNames).collect(Collectors.joining(
-				String.format("%n   "),
-				String.format("Available serial ports:%n   "),
-				""));
+			Photogator.ERR_LOG.format("Unable to load message content:  %1%s%n", ex.getMessage());
 		}
 	}
 
@@ -171,5 +139,10 @@ public class AboutDialog extends JDialog
 				String.format("Available serial ports:%n   <li>"),
 				String.format("</li>%n")));
 		}
+	}
+
+	private void onOkBtn(@SuppressWarnings("unused") ActionEvent evt)
+	{
+		setVisible(false);
 	}
 }
