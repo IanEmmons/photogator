@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,8 +49,6 @@ import javax.swing.WindowConstants;
 import org.virginiaso.serialport.ArduinoEvent;
 import org.virginiaso.serialport.HeartBeatEvent;
 import org.virginiaso.serialport.SerialPortReader;
-
-import com.apple.eawt.Application;
 
 import jssc.SerialPortException;
 
@@ -193,10 +192,8 @@ public class Photogator extends JFrame
 
 		setToolbarStateAccordingToSettings();
 
-		if (isMacOsX()) {
-			Application.getApplication().setAboutHandler(evt -> aboutBtnAction(null));
-			Application.getApplication().setPreferencesHandler(evt -> settingsBtnAction(null));
-		}
+		MacOSAdapter.setAboutMenuAction(this::aboutMenuAction);
+		MacOSAdapter.setPreferencesMenuAction(this::settingsMenuAction);
 	}
 
 	private static JButton createToolbarBtn(String imageName, String altText,
@@ -490,6 +487,11 @@ public class Photogator extends JFrame
 		setToolbarStateAccordingToSettings();
 	}
 
+	void settingsMenuAction(@SuppressWarnings("unused") EventObject evt)
+	{
+		settingsBtnAction(null);
+	}
+
 	private void setToolbarStateAccordingToSettings()
 	{
 		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY);
@@ -499,6 +501,11 @@ public class Photogator extends JFrame
 	{
 		@SuppressWarnings("unused")
 		AboutDialog dlg = new AboutDialog(this);
+	}
+
+	void aboutMenuAction(@SuppressWarnings("unused") EventObject evt)
+	{
+		aboutBtnAction(null);
 	}
 
 	private void serialPortRecieveAction(String msg)
@@ -589,12 +596,6 @@ public class Photogator extends JFrame
 			APP_NAME,											// Title
 			btnChoices,										// Option type determines button choices
 			msgType);											// Message type determines icon
-	}
-
-	private static boolean isMacOsX()
-	{
-		String osName = System.getProperty("os.name");
-		return osName != null && osName.toLowerCase().startsWith("mac os x");
 	}
 
 	public static void main(String[] args)
