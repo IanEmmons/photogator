@@ -11,21 +11,30 @@ public class MacOSAdapter
 {
 	private static class AppleEventHandler implements InvocationHandler
 	{
+		private String intendedMethodName;
 		private Consumer<EventObject> handler;
 
-		public AppleEventHandler(Consumer<EventObject> handler)
+		public AppleEventHandler(String intendedMethodName, Consumer<EventObject> handler)
 		{
+			this.intendedMethodName = intendedMethodName;
 			this.handler = handler;
 		}
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
 		{
-			//Photogator.ERR_LOG.format("AppleEventHandler:  Method name:  %1$s%n", method.getName());
-			//Photogator.ERR_LOG.format("AppleEventHandler:  Args length:  %1$d%n", args.length);
-			//Photogator.ERR_LOG.format("AppleEventHandler:  Args[0] type:  %1$s%n", args[0].getClass().getName());
-
-			handler.accept((EventObject) args[0]);
+			if (intendedMethodName.equals(method.getName())
+				&& args.length == 1
+				&& EventObject.class.isAssignableFrom(args[0].getClass()))
+			{
+				handler.accept((EventObject) args[0]);
+			}
+			else
+			{
+				Photogator.ERR_LOG.format("AppleEventHandler:  Method name:  %1$s%n", method.getName());
+				Photogator.ERR_LOG.format("AppleEventHandler:  Args length:  %1$d%n", args.length);
+				Photogator.ERR_LOG.format("AppleEventHandler:  Args[0] type:  %1$s%n", args[0].getClass().getName());
+			}
 			return null;
 		}
 	}
@@ -94,7 +103,7 @@ public class MacOSAdapter
 			{
 				Object aboutProxy = Proxy.newProxyInstance(MacOSAdapter.class.getClassLoader(),
 					new Class<?>[] { aboutHandlerClass },
-					new AppleEventHandler(handler));
+					new AppleEventHandler("handleAbout", handler));
 				setAboutHandlerMethod.invoke(appObj, aboutProxy);
 			}
 		}
@@ -112,7 +121,7 @@ public class MacOSAdapter
 			{
 				Object prefsProxy = Proxy.newProxyInstance(MacOSAdapter.class.getClassLoader(),
 					new Class<?>[] { prefsHandlerClass },
-					new AppleEventHandler(handler));
+					new AppleEventHandler("handlePreferences", handler));
 				setPrefsHandlerMethod.invoke(appObj, prefsProxy);
 			}
 		}
