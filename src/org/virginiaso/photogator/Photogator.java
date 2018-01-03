@@ -5,7 +5,10 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -25,9 +28,13 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.EventObject;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -42,6 +49,7 @@ import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
@@ -51,6 +59,7 @@ import org.virginiaso.serialport.HeartBeatEvent;
 import org.virginiaso.serialport.SerialPortReader;
 
 import jssc.SerialPortException;
+import sun.awt.CGraphicsDevice;
 
 public class Photogator extends JFrame
 {
@@ -68,8 +77,8 @@ public class Photogator extends JFrame
 
 	// These must match:
 	private static final String SAVED_SESSION_FILENM_FMT = APP_NAME + "Session-%1$s%2$02d-%3$03d.txt";
-	private static final Pattern SAVED_SESSION_FILENM_PARSER = Pattern.compile(
-		APP_NAME + "Session-([ABC])([0-9]+)-([0-9]+)\\.txt", Pattern.CASE_INSENSITIVE);
+	private static final Pattern SAVED_SESSION_FILENM_PARSER = Pattern
+		.compile(APP_NAME + "Session-([ABC])([0-9]+)-([0-9]+)\\.txt", Pattern.CASE_INSENSITIVE);
 
 	static final PrintStream ERR_LOG;
 
@@ -196,8 +205,8 @@ public class Photogator extends JFrame
 		MacOSAdapter.setPreferencesMenuAction(this::settingsMenuAction);
 	}
 
-	private static JButton createToolbarBtn(String imageName, String altText,
-		String toolTipText, ActionListener listener)
+	private static JButton createToolbarBtn(String imageName, String altText, String toolTipText,
+		ActionListener listener)
 	{
 		JButton btn = new JButton();
 		btn.setToolTipText(toolTipText);
@@ -397,8 +406,8 @@ public class Photogator extends JFrame
 		else
 		{
 			int option = confirmDlg(JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
-				"Saving the display for team %1$s-%2$d and then clearing it",
-				divisionCombo.getSelectedItem(), teamNumSpinner.getValue());
+				"Saving the display for team %1$s-%2$d and then clearing it", divisionCombo.getSelectedItem(),
+				teamNumSpinner.getValue());
 
 			if (option == JOptionPane.OK_OPTION)
 			{
@@ -447,10 +456,8 @@ public class Photogator extends JFrame
 		else if (!SAVED_SESSION_DIR.isDirectory())
 		{
 			msgDlg(
-				null, JOptionPane.ERROR_MESSAGE, null, ""
-				+ "Unable to create the directory for saved sessions,%n"
-				+ "     %1$s%n"
-				+ "because it already exists, but is not a directory",
+				null, JOptionPane.ERROR_MESSAGE, null, "" + "Unable to create the directory for saved sessions,%n"
+					+ "     %1$s%n" + "because it already exists, but is not a directory",
 				SAVED_SESSION_DIR.getAbsolutePath());
 		}
 		else
@@ -462,15 +469,10 @@ public class Photogator extends JFrame
 
 	private static int getNextSessionNumber(String division, int teamNum)
 	{
-		return 1 + Arrays.stream(SAVED_SESSION_DIR.listFiles())
-			.filter(File::isFile)
-			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName()))
-			.filter(Matcher::matches)
-			.filter(m -> division.equalsIgnoreCase(m.group(1)))
-			.filter(m -> teamNum == Integer.parseInt(m.group(2)))
-			.map(m -> Integer.parseInt(m.group(3)))
-			.max(Integer::compare)
-			.orElse(-1);
+		return 1 + Arrays.stream(SAVED_SESSION_DIR.listFiles()).filter(File::isFile)
+			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName())).filter(Matcher::matches)
+			.filter(m -> division.equalsIgnoreCase(m.group(1))).filter(m -> teamNum == Integer.parseInt(m.group(2)))
+			.map(m -> Integer.parseInt(m.group(3))).max(Integer::compare).orElse(-1);
 	}
 
 	private void clearDisplay()
@@ -523,13 +525,11 @@ public class Photogator extends JFrame
 				BeamBrokenEvent thisEvt = (BeamBrokenEvent) evt;
 				if (computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY)
 				{
-					if (thisEvt.getSensorId() == SensorId.START
-						&& applicableStartEvent == null)
+					if (thisEvt.getSensorId() == SensorId.START && applicableStartEvent == null)
 					{
 						applicableStartEvent = thisEvt;
 					}
-					else if (thisEvt.getSensorId() == SensorId.FINISH
-						&& applicableStartEvent != null)
+					else if (thisEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
 					{
 						appendToLog(thisEvt.formatDifference(applicableStartEvent));
 						applicableStartEvent = null;
@@ -541,8 +541,7 @@ public class Photogator extends JFrame
 					{
 						applicableStartEvent = thisEvt;
 					}
-					else if (thisEvt.getSensorId() == SensorId.FINISH
-						&& applicableStartEvent != null)
+					else if (thisEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
 					{
 						appendToLog(thisEvt.formatDifference(applicableStartEvent));
 						applicableStartEvent = null;
@@ -591,11 +590,11 @@ public class Photogator extends JFrame
 
 	private int confirmDlg(int msgType, int btnChoices, String fmt, Object... args)
 	{
-		return JOptionPane.showConfirmDialog(this,	// Parent window
-			String.format(fmt, args),					// Message
-			APP_NAME,											// Title
-			btnChoices,										// Option type determines button choices
-			msgType);											// Message type determines icon
+		return JOptionPane.showConfirmDialog(this, // Parent window
+			String.format(fmt, args), // Message
+			APP_NAME, // Title
+			btnChoices, // Option type determines button choices
+			msgType); // Message type determines icon
 	}
 
 	public static void main(String[] args)
@@ -603,6 +602,27 @@ public class Photogator extends JFrame
 		try
 		{
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+			double screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
+			int scaleFactor = 1;
+
+			msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, "Toolkit screen res:  %1$g dpi", screenDpi);
+
+			// Find the display device of interest:
+			GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment()
+				.getDefaultScreenDevice();
+			if (defaultScreenDevice instanceof CGraphicsDevice)	// On OS X, it would be CGraphicsDevice
+			{
+				CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
+				screenDpi = device.getYResolution();
+				scaleFactor = device.getScaleFactor();
+
+				msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, ""
+					+ "GraphicsDevice screen res:  %1$g dpi%n"
+					+ "Scale factor:  %2$d%n"
+					+ "True screen res:  %3$g dpi",
+					screenDpi, scaleFactor, screenDpi * scaleFactor);
+			}
 
 			EventQueue.invokeLater(new Runnable()
 			{
@@ -621,5 +641,21 @@ public class Photogator extends JFrame
 				"Unable to set look and feel.  Detailed error message:%n%1$s%n%2$s", ex.getClass().getName(),
 				ex.getMessage());
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private static void setDefaultFontSizes(float size)
+	{
+		UIDefaults defaults = UIManager.getDefaults();
+		Map<Object, Font> resizedFonts = defaults.keySet().stream()
+			.filter(Objects::nonNull)
+			.filter(key -> key.toString().toLowerCase().contains("font"))
+			.filter(key -> defaults.getFont(key) != null)
+			.collect(Collectors.toMap(
+				Function.identity(),										// key mapper
+				key -> defaults.getFont(key).deriveFont(size)));	// value mapper
+
+		// Collect key-font pairs above, then put them to avoid concurrent mods:
+		resizedFonts.forEach((key, font) -> UIManager.put(key, font));
 	}
 }
