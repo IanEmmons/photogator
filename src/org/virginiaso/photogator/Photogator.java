@@ -186,7 +186,7 @@ public class Photogator extends JFrame
 		log = new JTextArea(200, 50);
 		log.setText("");
 		log.setEditable(false);
-		log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 16));
+		log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
 		logScrollPane = new JScrollPane(log);
 
 		statusBar = new JToolBar(SwingConstants.HORIZONTAL);
@@ -622,26 +622,7 @@ public class Photogator extends JFrame
 		{
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-			double screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
-			int scaleFactor = 1;
-
-			msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, "Toolkit screen res:  %1$g dpi", screenDpi);
-
-			// Find the display device of interest:
-			GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment()
-				.getDefaultScreenDevice();
-			if (defaultScreenDevice instanceof CGraphicsDevice)	// On OS X, it would be CGraphicsDevice
-			{
-				CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
-				screenDpi = device.getYResolution();
-				scaleFactor = device.getScaleFactor();
-
-				msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, ""
-					+ "GraphicsDevice screen res:  %1$g dpi%n"
-					+ "Scale factor:  %2$d%n"
-					+ "True screen res:  %3$g dpi",
-					screenDpi, scaleFactor, screenDpi * scaleFactor);
-			}
+			magnifyAllDefaultFonts((float) (getScreenDPI() / 72.0));
 
 			EventQueue.invokeLater(new Runnable()
 			{
@@ -662,8 +643,33 @@ public class Photogator extends JFrame
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private static void setDefaultFontSizes(float size)
+	private static double getScreenDPI()
+	{
+		double screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
+		int scaleFactor = 1;
+
+		msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, "Toolkit screen res:  %1$g dpi", screenDpi);
+
+		// Find the display device of interest:
+		GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment()
+			.getDefaultScreenDevice();
+		if (defaultScreenDevice instanceof CGraphicsDevice)	// On OS X, it would be CGraphicsDevice
+		{
+			CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
+			screenDpi = device.getYResolution();
+			scaleFactor = device.getScaleFactor();
+
+			msgDlg(null, JOptionPane.INFORMATION_MESSAGE, null, ""
+				+ "GraphicsDevice screen res:  %1$g dpi%n"
+				+ "Scale factor:  %2$d%n"
+				+ "True screen res:  %3$g dpi",
+				screenDpi, scaleFactor, screenDpi * scaleFactor);
+		}
+
+		return screenDpi * scaleFactor;
+	}
+
+	private static void magnifyAllDefaultFonts(float scaleFactor)
 	{
 		UIDefaults defaults = UIManager.getDefaults();
 		Map<Object, Font> resizedFonts = defaults.keySet().stream()
@@ -671,10 +677,17 @@ public class Photogator extends JFrame
 			.filter(key -> key.toString().toLowerCase().contains("font"))
 			.filter(key -> defaults.getFont(key) != null)
 			.collect(Collectors.toMap(
-				Function.identity(),										// key mapper
-				key -> defaults.getFont(key).deriveFont(size)));	// value mapper
+				Function.identity(),													// key mapper
+				key -> magnifyDefaultFont(defaults, key, scaleFactor)));	// value mapper
 
 		// Collect key-font pairs above, then put them to avoid concurrent mods:
 		resizedFonts.forEach((key, font) -> UIManager.put(key, font));
+	}
+
+	private static Font magnifyDefaultFont(UIDefaults defaults, Object key, float scaleFactor)
+	{
+		Font oldFont = defaults.getFont(key);
+		float newSize = oldFont.getSize2D() * scaleFactor;
+		return oldFont.deriveFont(newSize);
 	}
 }
