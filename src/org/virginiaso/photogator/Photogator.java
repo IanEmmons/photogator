@@ -5,7 +5,10 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -191,9 +194,25 @@ public class Photogator extends JFrame
 		pack();
 
 		setToolbarStateAccordingToSettings();
+		setFrameSize();
 
 		MacOSAdapter.setAboutMenuAction(this::aboutMenuAction);
 		MacOSAdapter.setPreferencesMenuAction(this::settingsMenuAction);
+	}
+
+	private void setFrameSize()
+	{
+		GraphicsConfiguration grConfig = getGraphicsConfiguration();
+		Rectangle screenBounds = grConfig.getBounds();
+		Insets screenInsets = getToolkit().getScreenInsets(grConfig);
+		Rectangle usableScreenSpace = new Rectangle(
+			screenBounds.x + screenInsets.left,
+			screenBounds.y + screenInsets.top,
+			screenBounds.x + screenBounds.width - screenInsets.right - screenInsets.left,
+			screenBounds.y + screenBounds.height - screenInsets.bottom - screenInsets.top);
+		Rectangle currentBounds = getBounds();
+		Rectangle newBounds = currentBounds.intersection(usableScreenSpace);
+		setBounds(newBounds);
 	}
 
 	private static JButton createToolbarBtn(String imageName, String altText,
