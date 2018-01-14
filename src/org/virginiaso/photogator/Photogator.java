@@ -80,7 +80,7 @@ public class Photogator extends JFrame
 	private static final String[] DIVISIONS = { "A", "B", "C" };
 	private static final File SAVED_SESSION_DIR = new File("Saved" + APP_NAME + "Sessions");
 
-	private static final SimpleDateFormat XSD_TIME_FMT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+	private static final SimpleDateFormat XSD_TIME_FMT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 	// These must match:
 	private static final String SAVED_SESSION_FILENM_FMT = APP_NAME + "Session-%1$s%2$02d-%3$03d.txt";
@@ -622,8 +622,7 @@ public class Photogator extends JFrame
 
 	public static void main(String[] args)
 	{
-		ERR_LOG.format("==============================%n%1$s started at %2$s%n",
-			APP_NAME, XSD_TIME_FMT.format(new Date()));
+		ERR_LOG.format("%1$s started at %2$s%n", APP_NAME, XSD_TIME_FMT.format(new Date()));
 
 		try
 		{
@@ -645,8 +644,8 @@ public class Photogator extends JFrame
 		{
 			ex.printStackTrace(ERR_LOG);
 			msgDlg(null, JOptionPane.ERROR_MESSAGE, null,
-				"Unable to set look and feel.  Detailed error message:%n%1$s%n%2$s", ex.getClass().getName(),
-				ex.getMessage());
+				"Unable to set look and feel.  Detailed error message:%n%1$s%n%2$s",
+				ex.getClass().getName(), ex.getMessage());
 		}
 	}
 
