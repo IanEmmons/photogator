@@ -6,8 +6,6 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -64,11 +62,12 @@ import org.virginiaso.serialport.HeartBeatEvent;
 import org.virginiaso.serialport.SerialPortReader;
 
 import jssc.SerialPortException;
-import sun.awt.CGraphicsDevice;
 
 public class Photogator extends JFrame
 {
 	private static final long serialVersionUID = 1L;
+	private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
+	private static final boolean CORRECT_DEFAULT_FONT_SIZES = false;
 	public static final String APP_NAME = "Photogator";
 	private static final int TOOLBAR_IMAGE_SIZE = 24;
 	private static final String SERIAL_PORT_PROP = "serial.port";
@@ -190,7 +189,7 @@ public class Photogator extends JFrame
 		log = new JTextArea(200, 50);
 		log.setText("");
 		log.setEditable(false);
-		log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+		log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, Math.round(13.0f * getFontScaleFactor())));
 		logScrollPane = new JScrollPane(log);
 
 		statusBar = new JToolBar(SwingConstants.HORIZONTAL);
@@ -628,7 +627,10 @@ public class Photogator extends JFrame
 		{
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-			magnifyAllDefaultFonts(getScreenDPI() / 72.0);
+			if (CORRECT_DEFAULT_FONT_SIZES)
+			{
+				magnifyAllDefaultFonts(getFontScaleFactor());
+			}
 
 			EventQueue.invokeLater(new Runnable()
 			{
@@ -649,33 +651,36 @@ public class Photogator extends JFrame
 		}
 	}
 
-	private static double getScreenDPI()
+	private static float getFontScaleFactor()
 	{
-		double screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
-		int scaleFactor = 1;
-
-		ERR_LOG.format("Screen resolution, from Toolkit:  %1$g dpi%n", screenDpi);
-
-		// Find the display device of interest:
-		GraphicsDevice defaultScreenDevice = GraphicsEnvironment
-			.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		if (defaultScreenDevice instanceof CGraphicsDevice)	// True on Mac OS X
-		{
-			CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
-			screenDpi = device.getYResolution();
-			scaleFactor = device.getScaleFactor();
-
-			ERR_LOG.format(""
-				+ "Screen resolution, from CGraphicsDevice:  %1$g dpi%n"
-				+ "   Scale factor for retina display:       %2$d%n"
-				+ "   True screen resolution:                %3$g dpi%n",
-				screenDpi, scaleFactor, screenDpi * scaleFactor);
-		}
-
-		return screenDpi * scaleFactor;
+		// On Windows, Swing seems to assume a screen resolution of 72 DPI:
+		return isWindows() ? getScreenDPI() / 72.0f : 1.0f;
 	}
 
-	private static void magnifyAllDefaultFonts(double scaleFactor)
+	private static float getScreenDPI()
+	{
+		float screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
+
+		ERR_LOG.format("Screen resolution, obtained from Toolkit:  %1$g dpi%n", screenDpi);
+
+		//GraphicsDevice defaultScreenDevice = GraphicsEnvironment
+		//	.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+		//if (defaultScreenDevice instanceof CGraphicsDevice)	// True on Mac OS X
+		//{
+		//	CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
+		//	screenDpi = (float) (device.getScaleFactor() * device.getYResolution());
+		//
+		//	ERR_LOG.format(""
+		//		+ "Screen resolution, obtained from CGraphicsDevice:  %1$g dpi%n"
+		//		+ "   Scale factor for retina display:                %2$d%n"
+		//		+ "   True screen resolution:                         %3$g dpi%n",
+		//		device.getYResolution(), device.getScaleFactor(), screenDpi);
+		//}
+
+		return screenDpi;
+	}
+
+	private static void magnifyAllDefaultFonts(float scaleFactor)
 	{
 		ERR_LOG.format("Magnifying default fonts by a factor of %1$g%n", scaleFactor);
 
@@ -692,10 +697,20 @@ public class Photogator extends JFrame
 		resizedFonts.forEach((key, font) -> UIManager.put(key, font));
 	}
 
-	private static Font magnifyDefaultFont(UIDefaults defaults, Object key, double scaleFactor)
+	private static Font magnifyDefaultFont(UIDefaults defaults, Object key, float scaleFactor)
 	{
 		Font oldFont = defaults.getFont(key);
-		double newSize = oldFont.getSize2D() * scaleFactor;
-		return oldFont.deriveFont((float) newSize);
+		return oldFont.deriveFont(oldFont.getSize2D() * scaleFactor);
+	}
+
+	private static boolean isWindows() {
+		ERR_LOG.format("OS name:  '%1$s'%n", OS_NAME);
+		return OS_NAME.contains("win");
+	}
+
+	@SuppressWarnings("unused")
+	private static boolean isMacOSX() {
+		ERR_LOG.format("OS name:  '%1$s'%n", OS_NAME);
+		return OS_NAME.contains("mac");
 	}
 }
