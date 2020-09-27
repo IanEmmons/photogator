@@ -1,0 +1,47 @@
+plugins {
+	id 'java'
+	id 'application'
+	id 'eclipse'
+	//id 'checkstyle'
+	//id 'com.github.spotbugs' version '4.5.0'
+}
+
+group = 'org.virginiaso.photogator'
+version = '1.0.0'
+sourceCompatibility = '15'
+tasks.withType(JavaCompile) {
+	options.compilerArgs += '--enable-preview'
+}
+tasks.withType(Test) {
+	jvmArgs += "--enable-preview"
+}
+
+repositories {
+	jcenter()
+}
+
+dependencies {
+	implementation 'org.scream3r:jssc:2.8.0'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+}
+
+application {
+	mainClassName = 'org.virginiaso.photogator.Photogator'
+}
+
+jar {
+	manifest {
+		attributes(
+			'Main-Class': application.mainClassName
+		)
+	}
+	from {
+		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
