@@ -33,12 +33,13 @@
 		<copy todir="${binDir}">
 			<fileset dir="${srcDir}" excludes="**/*.java"/>
 		</copy>
-		<javac destdir="${binDir}" debug="on" deprecation="on" includeAntRuntime="false">
+		<javac destdir="${binDir}" source="15" debug="on" deprecation="on" includeAntRuntime="false">
 			<src path="${srcDir}"/>
 			<classpath>
 				<fileset dir="${libDir}" includes="*.jar"/>
 			</classpath>
 			<compilerarg value="-Xlint:all"/>
+			<compilerarg value="--enable-preview"/> <!-- for instanceof pattern matching -->
 		</javac>
 	</target>
 

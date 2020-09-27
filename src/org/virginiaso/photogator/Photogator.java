@@ -542,30 +542,29 @@ public class Photogator extends JFrame
 		else
 		{
 			appendToLog(evt.format());
-			if (evt instanceof BeamBrokenEvent)
+			if (evt instanceof BeamBrokenEvent bbEvt)
 			{
-				BeamBrokenEvent thisEvt = (BeamBrokenEvent) evt;
 				if (computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY)
 				{
-					if (thisEvt.getSensorId() == SensorId.START && applicableStartEvent == null)
+					if (bbEvt.getSensorId() == SensorId.START && applicableStartEvent == null)
 					{
-						applicableStartEvent = thisEvt;
+						applicableStartEvent = bbEvt;
 					}
-					else if (thisEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
+					else if (bbEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
 					{
-						appendToLog(thisEvt.formatDifference(applicableStartEvent));
+						appendToLog(bbEvt.formatDifference(applicableStartEvent));
 						applicableStartEvent = null;
 					}
 				}
 				else if (computeMethod == ElapsedTimeComputeMethod.CONSECUTIVE_START_END_PAIR)
 				{
-					if (thisEvt.getSensorId() == SensorId.START)
+					if (bbEvt.getSensorId() == SensorId.START)
 					{
-						applicableStartEvent = thisEvt;
+						applicableStartEvent = bbEvt;
 					}
-					else if (thisEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
+					else if (bbEvt.getSensorId() == SensorId.FINISH && applicableStartEvent != null)
 					{
-						appendToLog(thisEvt.formatDifference(applicableStartEvent));
+						appendToLog(bbEvt.formatDifference(applicableStartEvent));
 						applicableStartEvent = null;
 					}
 				}
@@ -660,23 +659,7 @@ public class Photogator extends JFrame
 	private static float getScreenDPI()
 	{
 		float screenDpi = Toolkit.getDefaultToolkit().getScreenResolution();
-
 		ERR_LOG.format("Screen resolution, obtained from Toolkit:  %1$g dpi%n", screenDpi);
-
-		//GraphicsDevice defaultScreenDevice = GraphicsEnvironment
-		//	.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		//if (defaultScreenDevice instanceof CGraphicsDevice)	// True on Mac OS X
-		//{
-		//	CGraphicsDevice device = (CGraphicsDevice) defaultScreenDevice;
-		//	screenDpi = (float) (device.getScaleFactor() * device.getYResolution());
-		//
-		//	ERR_LOG.format(""
-		//		+ "Screen resolution, obtained from CGraphicsDevice:  %1$g dpi%n"
-		//		+ "   Scale factor for retina display:                %2$d%n"
-		//		+ "   True screen resolution:                         %3$g dpi%n",
-		//		device.getYResolution(), device.getScaleFactor(), screenDpi);
-		//}
-
 		return screenDpi;
 	}
 
