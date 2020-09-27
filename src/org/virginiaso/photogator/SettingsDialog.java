@@ -82,16 +82,11 @@ public class SettingsDialog extends JDialog
 		pack();
 		setLocationRelativeTo(getOwner());
 
-		switch (etComputeMethod)
-		{
-		case CONSECUTIVE_START_END_PAIR:
-			consecutivePairsRadioBtn.setSelected(true);
-			break;
-		case FIRST_START_AFTER_READY:
-		default:
-			firstStartAfterReadyRadioBtn.setSelected(true);
-			break;
-		}
+		JRadioButton rb = switch (etComputeMethod) {
+		case CONSECUTIVE_START_END_PAIR -> consecutivePairsRadioBtn;
+		case FIRST_START_AFTER_READY -> firstStartAfterReadyRadioBtn;
+		};
+		rb.setSelected(true);
 
 		setVisible(true);
 	}
