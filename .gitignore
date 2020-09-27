@@ -4,11 +4,6 @@
 .project
 .settings/
 bin/
-bin-ant/
 build/
-lib/
-report/
-photogator/
 photogator.log
-prerequisites/
 SavedPhotogatorSessions/
