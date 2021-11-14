@@ -2,39 +2,32 @@ plugins {
 	id 'java'
 	id 'application'
 	id 'eclipse'
-	//id 'checkstyle'
-	//id 'com.github.spotbugs' version '4.5.0'
 }
 
 group = 'org.virginiaso.photogator'
 version = '1.0.0'
-sourceCompatibility = '15'
+sourceCompatibility = '17'
 tasks.withType(JavaCompile) {
-	options.compilerArgs += '--enable-preview'
-}
-tasks.withType(Test) {
-	jvmArgs += "--enable-preview"
+	options.compilerArgs += '-Xlint:all'
 }
 
 repositories {
-	jcenter()
+	mavenCentral()
 }
 
 dependencies {
 	implementation 'org.scream3r:jssc:2.8.0'
-
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 }
 
 application {
-	mainClassName = 'org.virginiaso.photogator.Photogator'
+	mainClass = 'org.virginiaso.photogator.Photogator'
 }
 
 jar {
 	manifest {
 		attributes(
-			'Main-Class': application.mainClassName
+			'Main-Class': application.mainClass
 		)
 	}
 	from {
