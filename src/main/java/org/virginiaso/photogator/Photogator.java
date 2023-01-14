@@ -2,6 +2,8 @@ package org.virginiaso.photogator;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -30,7 +32,6 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.EventObject;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -208,8 +209,15 @@ public class Photogator extends JFrame
 		setToolbarStateAccordingToSettings();
 		setFrameSize();
 
-		MacOSAdapter.setAboutMenuAction(this::aboutMenuAction);
-		MacOSAdapter.setPreferencesMenuAction(this::settingsMenuAction);
+		if (Desktop.isDesktopSupported()) {
+			var desktop = Desktop.getDesktop();
+			if (desktop.isSupported(Action.APP_ABOUT)) {
+				desktop.setAboutHandler(new AboutDesktopHandler(this));
+			}
+			if (desktop.isSupported(Action.APP_PREFERENCES)) {
+				desktop.setPreferencesHandler(new SettingsDesktopHandler(this));
+			}
+		}
 	}
 
 	private void setFrameSize()
@@ -414,12 +422,12 @@ public class Photogator extends JFrame
 		}
 	}
 
-	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	private void readyBtnAction(ActionEvent evt)
 	{
 		applicableStartEvent = null;
 	}
 
-	private void saveBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	private void saveBtnAction(ActionEvent evt)
 	{
 		if (log.getText().trim().isEmpty() || !isLogDirty())
 		{
@@ -504,16 +512,11 @@ public class Photogator extends JFrame
 		setLogDirty(false);
 	}
 
-	void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	void settingsBtnAction(ActionEvent evt)
 	{
 		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
 		computeMethod = dlg.getElapsedTimeComputeMethod();
 		setToolbarStateAccordingToSettings();
-	}
-
-	void settingsMenuAction(@SuppressWarnings("unused") EventObject evt)
-	{
-		settingsBtnAction(null);
 	}
 
 	private void setToolbarStateAccordingToSettings()
@@ -521,15 +524,10 @@ public class Photogator extends JFrame
 		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY);
 	}
 
-	void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt)
+	void aboutBtnAction(ActionEvent evt)
 	{
 		@SuppressWarnings("unused")
 		AboutDialog dlg = new AboutDialog(this);
-	}
-
-	void aboutMenuAction(@SuppressWarnings("unused") EventObject evt)
-	{
-		aboutBtnAction(null);
 	}
 
 	private void serialPortRecieveAction(String msg)

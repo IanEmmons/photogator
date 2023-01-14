@@ -12,15 +12,11 @@ public enum SensorId
 
 	public static SensorId getById(long idNum)
 	{
-		SensorId result = Arrays.stream(SensorId.values())
+		return Arrays.stream(SensorId.values())
 			.filter(id -> (id.sensorIdNum == idNum))
-			.findAny().orElse(null);
-		if (result == null)
-		{
-			throw new IllegalArgumentException(String.format(
-				"Unrecognized sensor ID number:  \"%1$d\"", idNum));
-		}
-		return result;
+			.findAny()
+			.orElseThrow(() -> new IllegalArgumentException(
+				"Unrecognized sensor ID number: \"%1$d\"".formatted(idNum)));
 	}
 
 	private SensorId(long idNum, String name)

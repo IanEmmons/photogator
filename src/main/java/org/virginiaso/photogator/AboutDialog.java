@@ -141,7 +141,7 @@ public class AboutDialog extends JDialog
 		}
 	}
 
-	private void onOkBtn(@SuppressWarnings("unused") ActionEvent evt)
+	private void onOkBtn(ActionEvent evt)
 	{
 		setVisible(false);
 	}

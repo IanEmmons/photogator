@@ -98,4 +98,3 @@ static void trigger(unsigned pin) {
 	// Send message on the serial port:
 	Serial.write(msg, strlen(msg) + 1);
 }
-
