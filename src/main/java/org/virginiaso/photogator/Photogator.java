@@ -69,16 +69,17 @@ public class Photogator extends JFrame
 	private static final long serialVersionUID = 1L;
 	private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
 	private static final boolean CORRECT_DEFAULT_FONT_SIZES = false;
-	public static final String APP_NAME = "Photogator";
+	public static final String APP_NAME = Photogator.class.getSimpleName();
 	private static final int TOOLBAR_IMAGE_SIZE = 24;
 	private static final String SERIAL_PORT_PROP = "serial.port";
 	private static final String SERIAL_PORT_ENV_VAR = "ARDUINO_SERIAL_PORT";
 	private static final File PROPERTIES_FILE = new File("SerialPort.properties");
-	private static final File LOG_FILE = new File(APP_NAME.toLowerCase() + ".log");
+	private static final File JAR_DIR = new File(System.getProperty("java.class.path")).getParentFile();
+	private static final File SAVED_SESSION_DIR = new File(JAR_DIR, APP_NAME + "Sessions");
+	private static final File LOG_FILE = new File(SAVED_SESSION_DIR, APP_NAME.toLowerCase() + ".log");
 	private static final String NOT_CONNECTED_MSG = "Not connected";
 	private static final String CONNECTED_MSG_FMT = "Connected to serial port %1$s";
 	private static final String[] DIVISIONS = { "A", "B", "C" };
-	private static final File SAVED_SESSION_DIR = new File("Saved" + APP_NAME + "Sessions");
 
 	private static final SimpleDateFormat XSD_TIME_FMT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -113,6 +114,7 @@ public class Photogator extends JFrame
 		PrintStream errLog = System.out;
 		try
 		{
+			LOG_FILE.getParentFile().mkdirs();
 			errLog = new PrintStream(LOG_FILE, StandardCharsets.UTF_8.name());
 		}
 		catch (IOException ex)
@@ -486,8 +488,10 @@ public class Photogator extends JFrame
 		else if (!SAVED_SESSION_DIR.isDirectory())
 		{
 			msgDlg(
-				null, JOptionPane.ERROR_MESSAGE, null, "" + "Unable to create the directory for saved sessions,%n"
-					+ "     %1$s%n" + "because it already exists, but is not a directory",
+				null, JOptionPane.ERROR_MESSAGE, null, ""
+					+ "Unable to create the directory for saved sessions,%n"
+					+ "     %1$s%n"
+					+ "because it already exists, but is not a directory",
 				SAVED_SESSION_DIR.getAbsolutePath());
 		}
 		else
