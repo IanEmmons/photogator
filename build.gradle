@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'org.virginiaso.photogator'
-version = '1.0.1'
+version = '1.0.2'
 sourceCompatibility = '17'
 
 tasks.withType(JavaCompile) {
@@ -16,8 +16,8 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.scream3r:jssc:2.8.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+	implementation 'io.github.java-native:jssc:2.9.4'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
 }
 
 application {
@@ -27,6 +27,9 @@ application {
 jar {
 	manifest {
 		attributes(
+			'Implementation-Title': 'Photogator',
+			'Implementation-Vendor': 'Virginia Science Olympiad (VASO)',
+			'Implementation-Version': project.version,
 			'Main-Class': application.mainClass
 		)
 	}

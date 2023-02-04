@@ -29,9 +29,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -39,6 +38,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -67,9 +67,11 @@ import jssc.SerialPortException;
 public class Photogator extends JFrame
 {
 	private static final long serialVersionUID = 1L;
-	private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
+	private static final boolean isWindows;
+	@SuppressWarnings("unused")
+	private static final boolean isMacOSX;
 	private static final boolean CORRECT_DEFAULT_FONT_SIZES = false;
-	public static final String APP_NAME = Photogator.class.getSimpleName();
+	public static final String APP_NAME = Photogator.class.getPackage().getImplementationTitle();
 	private static final int TOOLBAR_IMAGE_SIZE = 24;
 	private static final String SERIAL_PORT_PROP = "serial.port";
 	private static final String SERIAL_PORT_ENV_VAR = "ARDUINO_SERIAL_PORT";
@@ -80,8 +82,6 @@ public class Photogator extends JFrame
 	private static final String NOT_CONNECTED_MSG = "Not connected";
 	private static final String CONNECTED_MSG_FMT = "Connected to serial port %1$s";
 	private static final String[] DIVISIONS = { "A", "B", "C" };
-
-	private static final SimpleDateFormat XSD_TIME_FMT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 	// These must match:
 	private static final String SAVED_SESSION_FILENM_FMT = APP_NAME + "Session-%1$s%2$02d-%3$03d.txt";
@@ -111,17 +111,23 @@ public class Photogator extends JFrame
 
 	static
 	{
-		PrintStream errLog = System.out;
+		var errLog = System.out;
 		try
 		{
 			LOG_FILE.getParentFile().mkdirs();
-			errLog = new PrintStream(LOG_FILE, StandardCharsets.UTF_8.name());
+			errLog = new PrintStream(LOG_FILE, StandardCharsets.UTF_8);
 		}
 		catch (IOException ex)
 		{
 			ex.printStackTrace(errLog);
 		}
 		ERR_LOG = errLog;
+
+		var osName = System.getProperty("os.name").toLowerCase();
+		ERR_LOG.format("OS name: '%1$s'%n", osName);
+		isWindows = osName.contains("win");
+		isMacOSX = osName.contains("mac");
+
 		ArduinoEvent.registerMsgType(HeartBeatEvent.class);
 		ArduinoEvent.registerMsgType(BeamBrokenEvent.class);
 	}
@@ -243,7 +249,7 @@ public class Photogator extends JFrame
 		JButton btn = new JButton();
 		btn.setToolTipText(toolTipText);
 		btn.addActionListener(listener);
-		if (imageName == null || imageName.isEmpty())
+		if (imageName == null || imageName.isBlank())
 		{
 			btn.setIcon(createStrutIcon(altText));
 			btn.setText(altText);
@@ -281,7 +287,7 @@ public class Photogator extends JFrame
 	public static Image loadImageRsrc(String rsrcName)
 	{
 		Image result = null;
-		String rsrcPath = String.format("images/%1$s.png", rsrcName);
+		String rsrcPath = "%1$s.png".formatted(rsrcName);
 		URL imageURL = ImagePanel.class.getResource(rsrcPath);
 		if (imageURL == null)
 		{
@@ -327,8 +333,10 @@ public class Photogator extends JFrame
 				}
 				else
 				{
-					msgDlg(JOptionPane.ERROR_MESSAGE,
-						"No serial ports are present.%nPerhaps the photogates are not connected to the computer.");
+					msgDlg(JOptionPane.ERROR_MESSAGE, """
+						No serial ports are present.
+						Perhaps the photogates are not connected to the computer.
+						""");
 				}
 			}
 
@@ -340,14 +348,18 @@ public class Photogator extends JFrame
 			else
 			{
 				portRdr = new SerialPortReader(serialPortName, this::serialPortRecieveAction, ERR_LOG);
-				connectedLbl.setText(String.format(CONNECTED_MSG_FMT, serialPortName));
+				connectedLbl.setText(CONNECTED_MSG_FMT.formatted(serialPortName));
 			}
 		}
 		catch (SerialPortException ex)
 		{
 			ex.printStackTrace(ERR_LOG);
 			connectedLbl.setText(NOT_CONNECTED_MSG);
-			msgDlg(JOptionPane.ERROR_MESSAGE, "Unable to open serial port.  Detailed error message:%n%1$s%n%2$s",
+			msgDlg(JOptionPane.ERROR_MESSAGE, """
+				Unable to open serial port.  Detailed error message:
+				%1$s
+				%2$s
+				""",
 				ex.getClass().getName(), ex.getMessage());
 		}
 	}
@@ -413,15 +425,9 @@ public class Photogator extends JFrame
 
 	private static String blankToNull(String str)
 	{
-		if (str == null)
-		{
-			return null;
-		}
-		else
-		{
-			String strTrimmed = str.trim();
-			return (strTrimmed.isEmpty()) ? null : strTrimmed;
-		}
+		return (str == null || str.isBlank())
+			? null
+			: str.strip();
 	}
 
 	private void readyBtnAction(ActionEvent evt)
@@ -431,7 +437,7 @@ public class Photogator extends JFrame
 
 	private void saveBtnAction(ActionEvent evt)
 	{
-		if (log.getText().trim().isEmpty() || !isLogDirty())
+		if (log.getText().isBlank() || !isLogDirty())
 		{
 			msgDlg(JOptionPane.INFORMATION_MESSAGE, "Nothing to save.");
 		}
@@ -452,7 +458,11 @@ public class Photogator extends JFrame
 				catch (IOException ex)
 				{
 					ex.printStackTrace(ERR_LOG);
-					msgDlg(JOptionPane.ERROR_MESSAGE, "Unable to save display.  Detailed error message:%n%1$s%n%2$s",
+					msgDlg(JOptionPane.ERROR_MESSAGE, """
+						Unable to save display.  Detailed error message:
+						%1$s
+						%2$s
+						""",
 						ex.getClass().getName(), ex.getMessage());
 				}
 			}
@@ -467,7 +477,7 @@ public class Photogator extends JFrame
 			int teamNum = ((Integer) teamNumSpinner.getValue()).intValue();
 			int sessionNum = getNextSessionNumber(division, teamNum);
 			File newSessionFile = new File(SAVED_SESSION_DIR,
-				String.format(SAVED_SESSION_FILENM_FMT, division, teamNum, sessionNum));
+				SAVED_SESSION_FILENM_FMT.formatted(division, teamNum, sessionNum));
 			try (BufferedWriter wtr = Files.newBufferedWriter(newSessionFile.toPath(), StandardCharsets.UTF_8,
 				StandardOpenOption.CREATE_NEW))
 			{
@@ -488,10 +498,11 @@ public class Photogator extends JFrame
 		else if (!SAVED_SESSION_DIR.isDirectory())
 		{
 			msgDlg(
-				null, JOptionPane.ERROR_MESSAGE, null, ""
-					+ "Unable to create the directory for saved sessions,%n"
-					+ "     %1$s%n"
-					+ "because it already exists, but is not a directory",
+				null, JOptionPane.ERROR_MESSAGE, null, """
+					Unable to create the directory for saved sessions,
+						%1$s
+					because it already exists, but is not a directory
+					""",
 				SAVED_SESSION_DIR.getAbsolutePath());
 		}
 		else
@@ -503,10 +514,15 @@ public class Photogator extends JFrame
 
 	private static int getNextSessionNumber(String division, int teamNum)
 	{
-		return 1 + Arrays.stream(SAVED_SESSION_DIR.listFiles()).filter(File::isFile)
-			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName())).filter(Matcher::matches)
-			.filter(m -> division.equalsIgnoreCase(m.group(1))).filter(m -> teamNum == Integer.parseInt(m.group(2)))
-			.map(m -> Integer.parseInt(m.group(3))).max(Integer::compare).orElse(-1);
+		return 1 + Stream.of(SAVED_SESSION_DIR.listFiles())
+			.filter(File::isFile)
+			.map(f -> SAVED_SESSION_FILENM_PARSER.matcher(f.getName()))
+			.filter(Matcher::matches)
+			.filter(m -> division.equalsIgnoreCase(m.group(1)))
+			.filter(m -> teamNum == Integer.parseInt(m.group(2)))
+			.map(m -> Integer.parseInt(m.group(3)))
+			.max(Integer::compare)
+			.orElse(-1);
 	}
 
 	private void clearDisplay()
@@ -539,7 +555,7 @@ public class Photogator extends JFrame
 		ArduinoEvent evt = ArduinoEvent.parse(msg);
 		if (evt == null)
 		{
-			appendToLog(String.format("Error:  Unrecognized message format:  \"%1$s\"%n", msg));
+			appendToLog("Error: Unrecognized message format:  \"%1$s\"%n".formatted(msg));
 		}
 		else
 		{
@@ -572,7 +588,7 @@ public class Photogator extends JFrame
 				}
 				else
 				{
-					throw new IllegalStateException(String.format("Unknown compute method '%1$s'", computeMethod));
+					throw new IllegalStateException("Unknown compute method '%1$s'".formatted(computeMethod));
 				}
 			}
 		}
@@ -580,12 +596,18 @@ public class Photogator extends JFrame
 
 	private void appendToLog(String msg)
 	{
-		if (msg != null && !msg.isEmpty())
+		if (msg != null && !msg.isBlank())
 		{
 			log.append(msg);
 			setLogDirty(true);
 			log.setCaretPosition(log.getDocument().getLength());
 		}
+	}
+
+	public String getSerialPortName() {
+		return (portRdr == null)
+			? "None"
+			: portRdr.getSerialPortName();
 	}
 
 	private void msgDlg(int msgType, String fmt, Object... args)
@@ -600,7 +622,7 @@ public class Photogator extends JFrame
 
 	public static void msgDlg(JFrame parent, int msgType, ImageIcon img, String fmt, Object... args)
 	{
-		String msg = String.format(fmt, args);
+		String msg = fmt.formatted(args);
 		if (img == null)
 		{
 			JOptionPane.showMessageDialog(parent, msg, APP_NAME, msgType);
@@ -614,7 +636,7 @@ public class Photogator extends JFrame
 	private int confirmDlg(int msgType, int btnChoices, String fmt, Object... args)
 	{
 		return JOptionPane.showConfirmDialog(this, // Parent window
-			String.format(fmt, args), // Message
+			fmt.formatted(args), // Message
 			APP_NAME, // Title
 			btnChoices, // Option type determines button choices
 			msgType); // Message type determines icon
@@ -622,7 +644,8 @@ public class Photogator extends JFrame
 
 	public static void main(String[] args)
 	{
-		ERR_LOG.format("%1$s started at %2$s%n", APP_NAME, XSD_TIME_FMT.format(new Date()));
+		ERR_LOG.format("%1$s started at %2$s%n", APP_NAME,
+			LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
 		try
 		{
@@ -646,8 +669,11 @@ public class Photogator extends JFrame
 			| UnsupportedLookAndFeelException ex)
 		{
 			ex.printStackTrace(ERR_LOG);
-			msgDlg(null, JOptionPane.ERROR_MESSAGE, null,
-				"Unable to set look and feel.  Detailed error message:%n%1$s%n%2$s",
+			msgDlg(null, JOptionPane.ERROR_MESSAGE, null, """
+				Unable to set look and feel.  Detailed error message:
+				%1$s
+				%2$s
+				""",
 				ex.getClass().getName(), ex.getMessage());
 		}
 	}
@@ -655,7 +681,7 @@ public class Photogator extends JFrame
 	private static float getFontScaleFactor()
 	{
 		// On Windows, Swing seems to assume a screen resolution of 72 DPI:
-		return isWindows() ? getScreenDPI() / 72.0f : 1.0f;
+		return isWindows ? getScreenDPI() / 72.0f : 1.0f;
 	}
 
 	private static float getScreenDPI()
@@ -686,16 +712,5 @@ public class Photogator extends JFrame
 	{
 		Font oldFont = defaults.getFont(key);
 		return oldFont.deriveFont(oldFont.getSize2D() * scaleFactor);
-	}
-
-	private static boolean isWindows() {
-		ERR_LOG.format("OS name:  '%1$s'%n", OS_NAME);
-		return OS_NAME.contains("win");
-	}
-
-	@SuppressWarnings("unused")
-	private static boolean isMacOSX() {
-		ERR_LOG.format("OS name:  '%1$s'%n", OS_NAME);
-		return OS_NAME.contains("mac");
 	}
 }

@@ -11,9 +11,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -21,7 +20,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
@@ -35,6 +33,7 @@ public class AboutDialog extends JDialog
 	private static final String DIALOG_TITLE = "About %1$s";
 	private static final String ABOUT_MSG_CONTENT_RSRC = "AboutMessage.html";
 
+	private Photogator photogator;
 	private ImagePanel imgPanel;
 	private JEditorPane msgPane;
 	private JScrollPane msgScrollPane;
@@ -42,9 +41,10 @@ public class AboutDialog extends JDialog
 	private JButton okBtn;
 	private Box btnBox;
 
-	public AboutDialog(JFrame owner)
+	public AboutDialog(Photogator photogator)
 	{
-		super(owner, String.format(DIALOG_TITLE, Photogator.APP_NAME), true); // true for modal
+		super(photogator, DIALOG_TITLE.formatted(Photogator.APP_NAME), true); // true for modal
+		this.photogator = photogator;
 		initComponents();
 	}
 
@@ -61,7 +61,7 @@ public class AboutDialog extends JDialog
 		msgScrollPane = new JScrollPane(msgPane);
 		msgScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		Dimension prefSize = new Dimension(
-			(int) Math.round(1.618 * imgPanel.getPreferredSize().getWidth()),
+			(int) Math.round(1.8 * imgPanel.getPreferredSize().getWidth()),
 			(int) Math.round(imgPanel.getPreferredSize().getHeight()));
 		msgScrollPane.setPreferredSize(prefSize);
 		msgScrollPane.setMinimumSize(new Dimension(10, 10));
@@ -111,33 +111,41 @@ public class AboutDialog extends JDialog
 				content = brdr.lines().collect(Collectors.joining(System.lineSeparator()));
 			}
 
-			Path tmpPath = Files.createTempFile("PhotogatorAboutMessage", ".html");
-			try (PrintWriter pwtr = new PrintWriter(tmpPath.toFile(), StandardCharsets.UTF_8.name()))
+			var vendor = getClass().getPackage().getImplementationVendor();
+			var version = getClass().getPackage().getImplementationVersion();
+
+			var tmpPath = Files.createTempFile("PhotogatorAboutMessage", ".html");
+			try (var pwtr = new PrintWriter(tmpPath.toFile(), StandardCharsets.UTF_8))
 			{
-				pwtr.format(content, Photogator.APP_NAME, getPortNamesHtml());
+				pwtr.format(content, Photogator.APP_NAME, version, vendor,
+					getPortNamesHtml(photogator.getSerialPortName()));
 			}
 
 			msgPane.setPage(tmpPath.toUri().toURL());
 		}
 		catch (IOException ex)
 		{
-			Photogator.ERR_LOG.format("Unable to load message content:  %1%s%n", ex.getMessage());
+			ex.printStackTrace(Photogator.ERR_LOG);
 		}
 	}
 
-	public static String getPortNamesHtml()
+	public static String getPortNamesHtml(String connectedPort)
 	{
 		String[] portNames = SerialPortList.getPortNames();
 		if (portNames == null || portNames.length == 0)
 		{
-			return "There are no available serial ports.";
+			return "<p>There are no available serial ports.</p>";
 		}
 		else
 		{
-			return Arrays.stream(portNames).collect(Collectors.joining(
-				String.format("</li>%n   <li>"),
-				String.format("Available serial ports:%n   <li>"),
-				String.format("</li>%n")));
+			return Stream.of(portNames)
+				.map(port -> port.equals(connectedPort)
+					? "<b>%1$s (connected)</b>".formatted(port)
+					: port)
+				.collect(Collectors.joining(
+					"</li>\n   <li>",
+					"<p>Available serial ports:</p>\n<ul>\n   <li>",
+					"</li>\n</ul>\n"));
 		}
 	}
 

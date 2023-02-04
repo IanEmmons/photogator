@@ -26,13 +26,13 @@ public class BeamBrokenEvent extends ArduinoEvent
 	@Override
 	public String format()
 	{
-		return String.format(MSG_FMT, seqNum, formatWallClockTime(), sensorId.getName(), arduinoTime);
+		return MSG_FMT.formatted(seqNum, formatWallClockTime(), sensorId.getName(), arduinoTime);
 	}
 
 	public String formatDifference(BeamBrokenEvent lastEvent)
 	{
 		double elapsedSeconds = (arduinoTime - lastEvent.arduinoTime) / 1000.0;
-		return String.format(DIFFERENCE_FMT, elapsedSeconds, lastEvent.seqNum, seqNum);
+		return DIFFERENCE_FMT.formatted(elapsedSeconds, lastEvent.seqNum, seqNum);
 	}
 
 	public SensorId getSensorId()

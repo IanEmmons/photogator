@@ -3,9 +3,9 @@ package org.virginiaso.photogator;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -75,7 +75,7 @@ public class InitializationDialog extends JDialog
 		serialPortBtnBox.add(Box.createVerticalStrut(3));
 
 		Font btnFont = new Font(Font.MONOSPACED, Font.PLAIN, headingLbl.getFont().getSize());
-		serialPortBtns = Arrays.stream(SerialPortList.getPortNames())
+		serialPortBtns = Stream.of(SerialPortList.getPortNames())
 			.sorted()
 			.distinct()
 			.map(portName -> {

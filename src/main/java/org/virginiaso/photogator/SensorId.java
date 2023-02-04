@@ -1,6 +1,6 @@
 package org.virginiaso.photogator;
 
-import java.util.Arrays;
+import java.util.stream.Stream;
 
 public enum SensorId
 {
@@ -12,7 +12,7 @@ public enum SensorId
 
 	public static SensorId getById(long idNum)
 	{
-		return Arrays.stream(SensorId.values())
+		return Stream.of(SensorId.values())
 			.filter(id -> (id.sensorIdNum == idNum))
 			.findAny()
 			.orElseThrow(() -> new IllegalArgumentException(

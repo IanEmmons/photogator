@@ -24,15 +24,15 @@ public class SerialPortReader implements AutoCloseable
 		port = new SerialPort(serialPortName);
 		if (!port.openPort())
 		{
-			throw new SerialPortException(serialPortName, "openPort", "Unable to open serial port");
+			throw new SerialPortException(port, "openPort", "Unable to open serial port");
 		}
 		if (!port.setParams(BAUD_RATE, DATA_BITS, STOP_BITS, PARITY))
 		{
-			throw new SerialPortException(serialPortName, "setParams", "Unable to set serial port parameters");
+			throw new SerialPortException(port, "setParams", "Unable to set serial port parameters");
 		}
 		if (!port.setFlowControlMode(FLOW_CTRL_MODE))
 		{
-			throw new SerialPortException(serialPortName, "setFlowControlMode", "Unable to set serial port flow control");
+			throw new SerialPortException(port, "setFlowControlMode", "Unable to set serial port flow control");
 		}
 		port.addEventListener(new BufferingSerialPortListener(port, lstnr, errorLog), SerialPort.MASK_RXCHAR);
 	}

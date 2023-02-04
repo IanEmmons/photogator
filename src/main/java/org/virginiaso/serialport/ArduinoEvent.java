@@ -3,8 +3,8 @@ package org.virginiaso.serialport;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -15,6 +15,10 @@ public abstract class ArduinoEvent
 	private static class RegisteredMsgType
 	{
 		private static final String REGEX_FIELD_NAME = "MSG_PATTERN";
+		private static final String BAD_FIELD_TYPE_FMT
+			= "The field %1$s of class %2$s is of type %3$s (should be of type %4$s)";
+		private static final String CANT_REGISTER_FMT
+			= "Unable to register message type %1$s due to %2$s:  %3$s";
 		private final Class<? extends ArduinoEvent> msgType;
 		private final Pattern msgPattern;
 		private final Constructor<? extends ArduinoEvent> msgCtor;
@@ -31,17 +35,16 @@ public abstract class ArduinoEvent
 				}
 				else
 				{
-					throw new IllegalStateException(String.format(
-						"The field %1$s of class %2$s is of type %3$s (should be of type %4$s)",
-						REGEX_FIELD_NAME, msgType.getName(), f.getType().getName(), Pattern.class.getName()));
+					throw new IllegalStateException(BAD_FIELD_TYPE_FMT.formatted(
+						REGEX_FIELD_NAME, msgType.getName(), f.getType().getName(),
+							Pattern.class.getName()));
 				}
 				msgCtor = msgType.getConstructor(Matcher.class);
 			}
-			catch (NoSuchMethodException | SecurityException | NoSuchFieldException | IllegalArgumentException
-				| IllegalAccessException ex)
+			catch (NoSuchMethodException | SecurityException | NoSuchFieldException
+				| IllegalArgumentException | IllegalAccessException ex)
 			{
-				throw new IllegalStateException(String.format(
-					"Unable to register message type %1$s due to %2$s:  %3$s",
+				throw new IllegalStateException(CANT_REGISTER_FMT.formatted(
 					messageType.getName(), ex.getClass().getSimpleName(), ex.getMessage()), ex);
 			}
 		}
@@ -65,10 +68,10 @@ public abstract class ArduinoEvent
 		}
 	}
 
-	private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("h:mm:ss a");
+	private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm:ss a");
 	private static final Map<Class<? extends ArduinoEvent>, RegisteredMsgType> registeredMsgTypes = new HashMap<>();
 
-	private Date wallClockTime;
+	private LocalDateTime wallClockTime;
 
 	public static void registerMsgType(Class<? extends ArduinoEvent> messageType)
 	{
@@ -95,7 +98,7 @@ public abstract class ArduinoEvent
 
 	protected ArduinoEvent()
 	{
-		wallClockTime = new Date();
+		wallClockTime = LocalDateTime.now();
 	}
 
 	protected String formatWallClockTime()
