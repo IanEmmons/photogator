@@ -27,7 +27,7 @@ import org.virginiaso.serialport.SerialPortReader;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
-public class InitializationDialog extends JDialog
+public final class InitializationDialog extends JDialog
 {
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Connecting...";
@@ -46,14 +46,14 @@ public class InitializationDialog extends JDialog
 	private JLabel headingLbl;
 	private ButtonGroup serialPortBtnGrp;
 	private Box serialPortBtnBox;
-	private List<JRadioButton> serialPortBtns;
+	private transient List<JRadioButton> serialPortBtns;
 	private JProgressBar progBar;
 	private JButton exitBtn;
 	private Box progAndExitBox;
 	private Timer timer;
 	private int currentRadioBtnIndex = -1;
 	private long currentRadioBtnStartTime = System.currentTimeMillis() - 2 * TIME_LIMIT_FOR_ARDUINO_HEARTBEAT_MS;
-	private SerialPortReader portRdr = null;
+	private transient SerialPortReader portRdr = null;
 	private boolean arduinoDetected = false;
 	private String foundSerialPort = null;
 

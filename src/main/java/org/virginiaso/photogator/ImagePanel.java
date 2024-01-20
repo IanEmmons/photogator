@@ -8,11 +8,11 @@ import java.awt.LayoutManager;
 
 import javax.swing.JPanel;
 
-public class ImagePanel extends JPanel
+public final class ImagePanel extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 
-	private Image image;
+	private transient Image image;
 
 	public ImagePanel(String rsrcName)
 	{

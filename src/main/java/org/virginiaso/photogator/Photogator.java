@@ -64,14 +64,14 @@ import org.virginiaso.serialport.SerialPortReader;
 
 import jssc.SerialPortException;
 
-public class Photogator extends JFrame
+public final class Photogator extends JFrame
 {
 	private static final long serialVersionUID = 1L;
 	private static final boolean isWindows;
 	@SuppressWarnings("unused")
 	private static final boolean isMacOSX;
 	private static final boolean CORRECT_DEFAULT_FONT_SIZES = false;
-	public static final String APP_NAME = Photogator.class.getPackage().getImplementationTitle();
+	public static final String APP_NAME = Photogator.class.getSimpleName();
 	private static final int TOOLBAR_IMAGE_SIZE = 24;
 	private static final String SERIAL_PORT_PROP = "serial.port";
 	private static final String SERIAL_PORT_ENV_VAR = "ARDUINO_SERIAL_PORT";
@@ -104,9 +104,9 @@ public class Photogator extends JFrame
 	private JToolBar statusBar;
 	private JLabel connectedLbl;
 
-	private SerialPortReader portRdr = null;
+	private transient SerialPortReader portRdr = null;
 	private ElapsedTimeComputeMethod computeMethod = ElapsedTimeComputeMethod.FIRST_START_AFTER_READY;
-	private BeamBrokenEvent applicableStartEvent = null;
+	private transient BeamBrokenEvent applicableStartEvent = null;
 	private boolean isLogDirty = false;
 
 	static

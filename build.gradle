@@ -3,25 +3,37 @@ plugins {
 	id 'eclipse'
 }
 
-group = 'org.virginiaso.photogator'
-version = '1.0.3'
-sourceCompatibility = '17'
-
-tasks.withType(JavaCompile) {
-	options.compilerArgs += '-Xlint:all'
-}
-
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation 'io.github.java-native:jssc:2.9.4'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+	implementation 'io.github.java-native:jssc:2.9.6'
+}
+
+group = 'org.virginiaso.photogator'
+version = '1.0.4'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs += '-Xlint:all'
 }
 
 application {
 	mainClass = 'org.virginiaso.photogator.Photogator'
+}
+
+testing {
+	suites {
+		test {
+			useJUnitJupiter('5.10.1')
+		}
+	}
 }
 
 jar {
@@ -36,8 +48,4 @@ jar {
 	from {
 		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 	}
-}
-
-test {
-	useJUnitPlatform()
 }

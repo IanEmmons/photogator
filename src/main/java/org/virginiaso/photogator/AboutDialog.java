@@ -27,7 +27,7 @@ import javax.swing.WindowConstants;
 
 import jssc.SerialPortList;
 
-public class AboutDialog extends JDialog
+public final class AboutDialog extends JDialog
 {
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "About %1$s";

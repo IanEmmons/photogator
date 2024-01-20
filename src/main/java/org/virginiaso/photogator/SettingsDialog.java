@@ -15,7 +15,7 @@ import javax.swing.JRadioButton;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
-public class SettingsDialog extends JDialog
+public final class SettingsDialog extends JDialog
 {
 	private static final long serialVersionUID = 1L;
 	private static final String DIALOG_TITLE = "Settings";
