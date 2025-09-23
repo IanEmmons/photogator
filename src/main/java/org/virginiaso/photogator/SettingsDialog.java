@@ -51,7 +51,7 @@ public final class SettingsDialog extends JDialog
 
 		cancelBtn = new JButton("Cancel");
 		cancelBtn.setActionCommand(cancelBtn.getText());
-		cancelBtn.addActionListener(evt -> onCancelBtn());
+		cancelBtn.addActionListener(_ -> onCancelBtn());
 
 		radioBtnBox = Box.createVerticalBox();
 		radioBtnBox.add(headingLbl);
@@ -62,7 +62,7 @@ public final class SettingsDialog extends JDialog
 
 		okBtn = new JButton("OK");
 		okBtn.setActionCommand(okBtn.getText());
-		okBtn.addActionListener(evt -> onOkBtn());
+		okBtn.addActionListener(_ -> onOkBtn());
 		okBtn.setDefaultCapable(true);
 
 		okCancelBox = Box.createHorizontalBox();
@@ -73,7 +73,7 @@ public final class SettingsDialog extends JDialog
 		okCancelBox.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
 
 		getRootPane().setDefaultButton(okBtn);
-		getRootPane().registerKeyboardAction(evt -> onCancelBtn(),
+		getRootPane().registerKeyboardAction(_ -> onCancelBtn(),
 			KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
 			JComponent.WHEN_IN_FOCUSED_WINDOW);
 

@@ -430,12 +430,12 @@ public final class Photogator extends JFrame
 			: str.strip();
 	}
 
-	private void readyBtnAction(ActionEvent evt)
+	private void readyBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		applicableStartEvent = null;
 	}
 
-	private void saveBtnAction(ActionEvent evt)
+	private void saveBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		if (log.getText().isBlank() || !isLogDirty())
 		{
@@ -532,7 +532,7 @@ public final class Photogator extends JFrame
 		setLogDirty(false);
 	}
 
-	void settingsBtnAction(ActionEvent evt)
+	void settingsBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		SettingsDialog dlg = new SettingsDialog(this, computeMethod);
 		computeMethod = dlg.getElapsedTimeComputeMethod();
@@ -544,7 +544,7 @@ public final class Photogator extends JFrame
 		readyBtn.setEnabled(computeMethod == ElapsedTimeComputeMethod.FIRST_START_AFTER_READY);
 	}
 
-	void aboutBtnAction(ActionEvent evt)
+	void aboutBtnAction(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		@SuppressWarnings("unused")
 		AboutDialog dlg = new AboutDialog(this);

@@ -1,6 +1,5 @@
 plugins {
 	id 'application'
-	id 'eclipse'
 }
 
 repositories {
@@ -8,7 +7,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'io.github.java-native:jssc:2.9.6'
+	implementation 'io.github.java-native:jssc:2.10.2'
 	implementation 'org.slf4j:slf4j-api:2.0.17'
 	implementation 'ch.qos.logback:logback-classic:1.5.18'
 }
@@ -18,7 +17,7 @@ version = '1.0.6'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
@@ -33,7 +32,7 @@ application {
 testing {
 	suites {
 		test {
-			useJUnitJupiter('5.12.2')	// org.junit.jupiter:junit-jupiter
+			useJUnitJupiter('5.13.4')	// org.junit.jupiter:junit-jupiter
 		}
 	}
 }

@@ -111,7 +111,7 @@ public final class InitializationDialog extends JDialog
 		timer.start();
 	}
 
-	private void onTimerEvent(ActionEvent evt)
+	private void onTimerEvent(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		if (!isASerialPortPresent())
 		{
@@ -178,7 +178,7 @@ public final class InitializationDialog extends JDialog
 		}
 	}
 
-	private void onExitBtn(ActionEvent evt)
+	private void onExitBtn(@SuppressWarnings("unused") ActionEvent evt)
 	{
 		timer.stop();
 		foundSerialPort = null;
