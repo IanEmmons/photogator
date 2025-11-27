@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(dirname "$0")
+
+xattr -c ${SCRIPT_DIR}/photogator-*.jar
+java --enable-native-access=ALL-UNNAMED -jar ${SCRIPT_DIR}/photogator-*.jar &
